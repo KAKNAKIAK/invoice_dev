@@ -1818,8 +1818,22 @@ async function saveFile(isSaveAs = false, clickedButton = null) {
         const sessionFileHandle = currentSession ? currentSession.fileHandle : currentFileHandle;
         
         if (isSaveAs || !sessionFileHandle) {
+            // 현재 파일명 가져오기
+            let suggestedFileName;
+            if (sessionFileHandle && sessionFileHandle.name) {
+                // 기존 파일이 있으면 그 이름 사용
+                suggestedFileName = sessionFileHandle.name;
+            } else if (currentSession && currentSession.displayName && currentSession.displayName !== '새 견적서') {
+                // 세션에 표시명이 있으면 사용
+                suggestedFileName = currentSession.displayName.endsWith('.html') ? 
+                    currentSession.displayName : `${currentSession.displayName}.html`;
+            } else {
+                // 기본값
+                suggestedFileName = `견적서_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.html`;
+            }
+            
             const newHandle = await window.showSaveFilePicker({
-                suggestedName: `견적서_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.html`,
+                suggestedName: suggestedFileName,
                 types: [{ description: 'HTML 파일', accept: { 'text/html': ['.html'] } }]
             });
             const writableStream = await newHandle.createWritable();
