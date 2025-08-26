@@ -565,6 +565,12 @@ body {
     font-size: 12px;
 }
 
+/* 포함/불포함 텍스트 영역 폰트 크기 */
+.inclusion-text,
+.exclusion-text {
+    font-size: 12px;
+}
+
 /* 고객 정보 텍스트 및 입력창 크기 */
 #customerInfoContainer label,
 #customerInfoContainer input {
