@@ -450,7 +450,7 @@ function rebindWorkspaceEventListeners() {
                 const button = target.closest('button');
 
                 if (!button) {
-                    if(target.matches('.person-type-name-span, .person-count-span, .dynamic-row-label-span')) {
+                    if(target.matches('.person-type-name-span, .person-count-span, .dynamic-row-label-span, .cost-row-label-span')) {
                         const calcContainer = target.closest('.calculator-instance');
                         const callback = () => calculateAll(calcContainer);
                         const inputType = target.classList.contains('person-count-span') ? 'number' : 'text';
@@ -2290,7 +2290,7 @@ function createGroupUI(groupId) {
     tabEl.className = 'quote-tab';
     tabEl.dataset.groupId = groupId;
     const groupName = quoteGroupsData[groupId]?.name || `견적 ${groupId}`;
-    tabEl.innerHTML = `<span>${groupName}</span><button type="button" class="close-tab-btn" title="탭 닫기">×</button>`;
+    tabEl.innerHTML = `<span title="더블클릭하여 수정 가능">${groupName}</span><button type="button" class="close-tab-btn" title="탭 닫기">×</button>`;
     tabsContainer.appendChild(tabEl);
     tabEl.addEventListener('click', e => { if (e.target.tagName !== 'BUTTON') switchTab(groupId); });
     tabEl.querySelector('.close-tab-btn').addEventListener('click', () => deleteGroup(groupId));
@@ -2348,8 +2348,8 @@ function initializeGroup(groupEl, groupId) {
                     <button type="button" class="btn btn-sm btn-primary load-inclusion-exclusion-db-btn"><i class="fas fa-database mr-1"></i> DB 불러오기</button>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">포함</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5"></textarea></div>
-                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">불포함</h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="불포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5"></textarea></div>
+                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">포함</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
+                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">불포함</h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="불포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
                 </div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50"><h2 class="text-base font-semibold mb-4">호텔카드 메이커</h2><div id="hotel-maker-container-${groupId}"></div></section> 
@@ -2402,7 +2402,7 @@ function initializeGroup(groupEl, groupId) {
 
 function buildCalculatorDOM(calcContainer) {
     const content = document.createElement('div');
-    content.innerHTML = `<div class="split-container"><div class="pnr-pane"><label class="label-text font-semibold mb-2"><span class="pnr-title-span" title="더블클릭하여 수정 가능">PNR 정보(더블클릭-제목수정)</span></label><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="PNR 정보를 여기에 붙여넣으세요."></textarea></div><div class="resizer-handle"></div><div class="quote-pane"><div class="table-container"><table class="quote-table"><thead><tr class="header-row"><th><button type="button" class="btn btn-sm btn-primary add-person-type-btn"><i class="fas fa-plus"></i></button></th></tr><tr class="count-row"><th></th></tr></thead><tbody></tbody><tfoot></tfoot></table></div></div></div>`;
+    content.innerHTML = `<div class="split-container"><div class="pnr-pane"><label class="label-text font-semibold mb-2"><span class="pnr-title-span" title="더블클릭하여 수정 가능">PNR 정보</span></label><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="PNR 정보를 여기에 붙여넣으세요."></textarea></div><div class="resizer-handle"></div><div class="quote-pane"><div class="table-container"><table class="quote-table"><thead><tr class="header-row"><th><button type="button" class="btn btn-sm btn-primary add-person-type-btn"><i class="fas fa-plus"></i></button></th></tr><tr class="count-row"><th></th></tr></thead><tbody></tbody><tfoot></tfoot></table></div></div></div>`;
     const calculatorElement = content.firstElementChild;
     calcContainer.appendChild(calculatorElement);
 
@@ -2434,7 +2434,7 @@ function buildCalculatorDOM(calcContainer) {
         if (def.type === 'button') {
             labelCell.innerHTML = `<button type="button" class="btn btn-sm btn-secondary add-dynamic-row-btn">${def.label}</button>`;
         } else { 
-            labelCell.innerHTML = `<span class="cost-row-label-span">${def.label}</span>`; 
+            labelCell.innerHTML = `<span class="cost-row-label-span" title="더블클릭하여 수정 가능">${def.label}</span>`; 
         }
     });
 }
@@ -2547,10 +2547,10 @@ function addPersonTypeColumn(calcContainer, typeName = '성인', count = 1) {
     const headerRow = table.querySelector('thead .header-row');
     const colIndex = headerRow.cells.length;
     const headerCell = document.createElement('th');
-    headerCell.innerHTML = `<div class="relative"><span class="person-type-name-span">${typeName}</span><button type="button" class="remove-col-btn" title="이 항목 삭제"><i class="fas fa-times"></i></button></div>`;
+    headerCell.innerHTML = `<div class="relative"><span class="person-type-name-span" title="더블클릭하여 수정 가능">${typeName}</span><button type="button" class="remove-col-btn" title="이 항목 삭제"><i class="fas fa-times"></i></button></div>`;
     headerRow.appendChild(headerCell);
     const countCell = document.createElement('th');
-    countCell.innerHTML = `<span class="person-count-span">${count}</span>`;
+    countCell.innerHTML = `<span class="person-count-span" title="더블클릭하여 수정 가능">${count}</span>`;
     table.querySelector('thead .count-row').appendChild(countCell);
     table.querySelectorAll('tbody tr').forEach(tr => {
         const rowId = tr.dataset.rowId;
@@ -2573,7 +2573,7 @@ function addDynamicCostRow(calcContainer, label = '신규 항목') {
     const insertionIndex = Array.from(tbody.rows).indexOf(buttonRow);
     const newRow = tbody.insertRow(insertionIndex);
     newRow.dataset.rowId = rowId;
-    newRow.insertCell(0).innerHTML = `<div class="flex items-center"><button type="button" class="dynamic-row-delete-btn"><i class="fas fa-trash-alt"></i></button><span class="dynamic-row-label-span ml-2">${label}</span></div>`;
+    newRow.insertCell(0).innerHTML = `<div class="flex items-center"><button type="button" class="dynamic-row-delete-btn"><i class="fas fa-trash-alt"></i></button><span class="dynamic-row-label-span ml-2" title="더블클릭하여 수정 가능">${label}</span></div>`;
     for (let i = 1; i < numCols; i++) { newRow.insertCell(i).innerHTML = getCellContent(rowId, i, 'costInput'); }
     
     calculateAll(calcContainer);
@@ -2650,7 +2650,7 @@ function createFlightSubgroup(container, subgroupData, groupId) {
     const subGroupDiv = document.createElement('div');
     subGroupDiv.className = 'dynamic-section flight-schedule-subgroup';
     subGroupDiv.id = subgroupData.id;
-    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="삭제"><i class="fas fa-trash-alt"></i></button><div class="mb-2"><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="항공사" value="${subgroupData.title || ''}"></div><div class="overflow-x-auto"><table class="flight-schedule-table"><thead><tr><th>편명</th><th>출발일</th><th>출발지</th><th>출발시간</th><th>도착일</th><th>도착지</th><th>도착시간</th><th style="width: 50px;"></th></tr></thead><tbody></tbody></table></div><div class="add-row-btn-container pt-2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></div>`;
+    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="삭제"><i class="fas fa-trash-alt"></i></button><div class="mb-2"><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="항공사" title="클릭하여 수정 가능" value="${subgroupData.title || ''}"></div><div class="overflow-x-auto"><table class="flight-schedule-table"><thead><tr><th>편명</th><th>출발일</th><th>출발지</th><th>출발시간</th><th>도착일</th><th>도착지</th><th>도착시간</th><th style="width: 50px;"></th></tr></thead><tbody></tbody></table></div><div class="add-row-btn-container pt-2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></div>`;
     const tbody = subGroupDiv.querySelector('tbody');
     subgroupData.rows.forEach(rowData => addFlightRow(tbody, rowData, subgroupData));
     
@@ -2659,7 +2659,7 @@ function createFlightSubgroup(container, subgroupData, groupId) {
 function addFlightRow(tbody, rowData, subgroupData) {
     const tr = document.createElement('tr');
     const fields = [{ key: 'flightNum', placeholder: 'ZE561' }, { key: 'depDate', placeholder: '07/09' }, { key: 'originCity', placeholder: 'ICN' }, { key: 'depTime', placeholder: '20:55' }, { key: 'arrDate', placeholder: '07/09' }, { key: 'destCity', placeholder: 'CXR' }, { key: 'arrTime', placeholder: '23:55' }];
-    tr.innerHTML = fields.map(f => `<td><span class="flight-schedule-cell" data-field="${f.key}" data-placeholder="${f.placeholder}" contenteditable="true">${rowData[f.key] || ''}</span></td>`).join('') + `<td class="text-center"><button type="button" class="delete-row-btn" title="삭제"><i class="fas fa-trash"></i></button></td>`;
+    tr.innerHTML = fields.map(f => `<td><span class="flight-schedule-cell" data-field="${f.key}" data-placeholder="${f.placeholder}" contenteditable="true" title="클릭하여 수정 가능">${rowData[f.key] || ''}</span></td>`).join('') + `<td class="text-center"><button type="button" class="delete-row-btn" title="삭제"><i class="fas fa-trash"></i></button></td>`;
     tbody.appendChild(tr);
 }
 function generateInclusionExclusionInlineHtml(inclusionText, exclusionText) { 
@@ -2683,7 +2683,7 @@ function createPriceSubgroup(container, subgroupData, groupId) {
     const subGroupDiv = document.createElement('div');
     subGroupDiv.className = 'dynamic-section price-subgroup';
     subGroupDiv.id = subgroupData.id;
-    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="삭제"><i class="fas fa-trash-alt"></i></button><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm mb-2 price-subgroup-title" placeholder="견적설명" value="${subgroupData.title || ''}"><table class="price-table"><thead><tr><th style="width:25%">내역</th><th>1인당금액</th><th>인원</th><th>총금액</th><th style="width:30%">비고</th><th style="width:50px"></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3" class="text-right font-bold pr-2">총 합계</td><td class="grand-total">0</td><td colspan="2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></td></tr></tfoot></table>`;
+    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="삭제"><i class="fas fa-trash-alt"></i></button><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm mb-2 price-subgroup-title" placeholder="견적설명" title="클릭하여 수정 가능" value="${subgroupData.title || ''}"><table class="price-table"><thead><tr><th style="width:25%">내역</th><th>1인당금액</th><th>인원</th><th>총금액</th><th style="width:30%">비고</th><th style="width:50px"></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3" class="text-right font-bold pr-2">총 합계</td><td class="grand-total">0</td><td colspan="2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></td></tr></tfoot></table>`;
     const tbody = subGroupDiv.querySelector('tbody');
     if (subgroupData.rows && subgroupData.rows.length > 0) {
         subgroupData.rows.forEach(rowData => addPriceRow(tbody, rowData, subgroupData, subGroupDiv, groupId));
@@ -2708,7 +2708,7 @@ function addPriceRow(tbody, rowData, subgroupData, subGroupDiv, groupId) {
                 (parseFloat(String(rowData[f.key]).replace(/,/g, '')) || 0).toLocaleString() : 
                 rowData[f.key]) : '';
         
-        return `<td><span class="price-table-cell text-${f.align}" data-field="${f.key}" data-placeholder="${f.placeholder}" ${f.readonly ? 'readonly' : 'contenteditable="true"'}>${value}</span></td>`;
+        return `<td><span class="price-table-cell text-${f.align}" data-field="${f.key}" data-placeholder="${f.placeholder}" ${f.readonly ? 'readonly' : 'contenteditable="true"'} title="${f.readonly ? '자동 계산됨' : '클릭하여 수정 가능'}">${value}</span></td>`;
     }).join('') + `<td><button type="button" class="delete-row-btn"><i class="fas fa-trash"></i></button></td>`;
     
     tbody.appendChild(tr);
@@ -2970,7 +2970,7 @@ function setupEventListeners() {
         const button = target.closest('button');
 
         if (!button) {
-            if(target.matches('.person-type-name-span, .person-count-span, .dynamic-row-label-span')) {
+            if(target.matches('.person-type-name-span, .person-count-span, .dynamic-row-label-span, .cost-row-label-span')) {
                 const calcContainer = target.closest('.calculator-instance');
                 const callback = () => calculateAll(calcContainer);
                 const inputType = target.classList.contains('person-count-span') ? 'number' : 'text';
@@ -3322,4 +3322,42 @@ document.addEventListener('DOMContentLoaded', () => {
         else { initializeNewSession(); }
     }
     setupEventListeners();
+    
+    // 기존 요소들에 툴팁 추가
+    setTimeout(() => {
+        addTooltipsToExistingElements();
+    }, 100);
 });
+
+// 기존 요소들에 툴팁 추가하는 함수
+function addTooltipsToExistingElements() {
+    // 비용 행 라벨들
+    document.querySelectorAll('.cost-row-label-span:not([title])').forEach(el => {
+        el.setAttribute('title', '더블클릭하여 수정 가능');
+    });
+    
+    // 인원 타입 이름들
+    document.querySelectorAll('.person-type-name-span:not([title])').forEach(el => {
+        el.setAttribute('title', '더블클릭하여 수정 가능');
+    });
+    
+    // 인원 수들
+    document.querySelectorAll('.person-count-span:not([title])').forEach(el => {
+        el.setAttribute('title', '더블클릭하여 수정 가능');
+    });
+    
+    // 동적 행 라벨들
+    document.querySelectorAll('.dynamic-row-label-span:not([title])').forEach(el => {
+        el.setAttribute('title', '더블클릭하여 수정 가능');
+    });
+    
+    // PNR 제목
+    document.querySelectorAll('.pnr-title-span:not([title])').forEach(el => {
+        el.setAttribute('title', '더블클릭하여 수정 가능');
+    });
+    
+    // 견적 그룹 탭들
+    document.querySelectorAll('.quote-tab span:not([title])').forEach(el => {
+        el.setAttribute('title', '더블클릭하여 수정 가능');
+    });
+}
