@@ -389,16 +389,18 @@ function rebindWorkspaceEventListeners() {
         const newNewGroupBtn = document.getElementById('newGroupBtn');
         if (newNewGroupBtn) {
             newNewGroupBtn.addEventListener('click', () => {
+                groupCounter++;
                 const newGroupId = `group_${Date.now()}`;
                 quoteGroupsData[newGroupId] = {
+                    name: `견적 ${groupCounter}`,
                     calculators: [],
                     flightSchedule: [],
                     priceInfo: [],
-                    hotelMaker: { hotels: [{}], activeIndex: 0 },
+                    hotelMakerData: { allHotelData: [{ nameKo: '새 호텔 1', nameEn: "", website: "", image: "", description: "" }], currentHotelIndex: 0 },
+                    itineraryData: { title: "새 일정표", days: [], editingTitle: false },
                     inclusionText: '',
                     exclusionText: ''
                 };
-                groupCounter++;
                 createGroupUI(newGroupId);
                 switchGroup(newGroupId);
             });
@@ -1021,7 +1023,7 @@ function initializeHotelMakerForGroup(container, groupId) {
         <div class="hm-controls flex flex-wrap gap-2 justify-end mb-4">
             <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 코드 복사</button>
             <button id="hm-previewHotelBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> 미리보기</button>
-            <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-database"></i> DB 불러오기</button>
+            <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-green"><i class="fas fa-database"></i> DB 불러오기</button>
         </div>
         <div id="hm-hotelTabsContainer-${groupId}" class="hm-tabs-container flex flex-wrap items-center border-b-2 border-gray-200 mb-4">
             <button id="hm-addHotelTabBtn-${groupId}" class="hotel-tab-button"><i class="fas fa-plus mr-2"></i>새 호텔 추가</button>
@@ -1342,9 +1344,9 @@ function initializeItineraryPlannerForGroup(container, groupId) {
             <div class="flex justify-between items-center h-[50px]">
                 <div id="ip-headerTitleSection-${groupId}" class="ip-header-title-container"></div>
                 <div class="flex items-center space-x-2">
-                    <button id="ip-loadFromDBBtn-${groupId}" class="btn btn-sm btn-primary" title="DB에서 일정 불러오기"><i class="fas fa-database"></i><span class="inline ml-2">DB 불러오기</span></button>
                     <button id="ip-copyInlineHtmlButton-${groupId}" class="btn btn-sm btn-outline" title="일정표 코드 복사"><i class="fas fa-copy"></i> 코드 복사</button>
-                    <button id="ip-inlinePreviewButton-${groupId}" class="btn btn-sm btn-primary" title="인라인 형식 미리보기"><i class="fas fa-eye"></i> 미리보기</button>
+                    <button id="ip-inlinePreviewButton-${groupId}" class="btn btn-sm btn-outline" title="인라인 형식 미리보기"><i class="fas fa-eye"></i> 미리보기</button>
+                    <button id="ip-loadFromDBBtn-${groupId}" class="btn btn-sm btn-green" title="DB에서 일정 불러오기"><i class="fas fa-database"></i><span class="inline ml-2">DB 불러오기</span></button>
                 </div>
             </div>
         </header>
@@ -2341,7 +2343,7 @@ function initializeGroup(groupEl, groupId) {
                     <div class="flex items-center space-x-2">
                         <button type="button" class="btn btn-sm btn-outline copy-flight-schedule-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
                         <button type="button" class="btn btn-sm btn-primary parse-gds-btn">GDS 파싱</button>
-                        <button type="button" class="btn btn-sm btn-primary add-flight-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
+                        <button type="button" class="btn btn-sm btn-outline add-flight-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
                 <div class="space-y-4 flight-schedule-container"></div>
@@ -2359,7 +2361,7 @@ function initializeGroup(groupEl, groupId) {
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center"><h2 class="text-base font-semibold">포함/불포함</h2><span class="text-sm text-gray-500 ml-2 inclusion-exclusion-doc-name-display"></span></div>
-                    <button type="button" class="btn btn-sm btn-primary load-inclusion-exclusion-db-btn"><i class="fas fa-database mr-1"></i> DB 불러오기</button>
+                    <button type="button" class="btn btn-sm btn-green load-inclusion-exclusion-db-btn"><i class="fas fa-database mr-1"></i> DB 불러오기</button>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-4">
                     <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">포함</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
