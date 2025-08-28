@@ -151,17 +151,24 @@ body {
 }
 
 .resizer-handle {
-    width: 5px;
+    width: 7px;
     cursor: col-resize;
     background-color: #e5e7eb; /* gray-200 */
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.resizer-handle:hover {
+    background-color: #9ca3af; /* gray-400 on hover */
+}
+
+.resizer-handle:active {
+    background-color: #6b7280; /* gray-500 when dragging */
 }
 
 .quote-pane {
-    min-width: 450px;       /* 최소 너비 450px */
-    max-width: 450px;       /* 최대 너비도 450px로 고정 */
-    width: 450px;           /* 고정 너비 */
+    min-width: 280px;       /* 최소 너비만 설정 */
     flex-shrink: 0;         /* 수축 방지 */
-    flex-grow: 0;           /* 확장 방지 */
     padding-left: 1rem;
     overflow-x: auto;       /* 테이블 스크롤 허용 */
     min-height: 400px;
