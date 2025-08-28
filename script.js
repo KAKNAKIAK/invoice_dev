@@ -2342,7 +2342,7 @@ function initializeGroup(groupEl, groupId) {
                     <h2 class="text-base font-semibold">항공 스케줄</h2>
                     <div class="flex items-center space-x-2">
                         <button type="button" class="btn btn-sm btn-outline copy-flight-schedule-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
-                        <button type="button" class="btn btn-sm btn-primary parse-gds-btn">GDS 파싱</button>
+                        <button type="button" class="btn btn-sm btn-green parse-gds-btn">GDS 파싱</button>
                         <button type="button" class="btn btn-sm btn-outline add-flight-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
@@ -2353,7 +2353,7 @@ function initializeGroup(groupEl, groupId) {
                     <h2 class="text-base font-semibold">요금 안내</h2>
                     <div class="flex items-center space-x-2">
                         <button type="button" class="btn btn-sm btn-outline copy-price-info-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
-                        <button type="button" class="btn btn-sm btn-primary add-price-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
+                        <button type="button" class="btn btn-sm btn-green add-price-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
                 <div class="space-y-4 price-info-container"></div>
@@ -3233,6 +3233,14 @@ function setupEventListeners() {
 
             document.body.style.cursor = 'col-resize';
             document.body.style.userSelect = 'none';
+            
+            // 현재 너비값이 없으면 초기화 (두 번째 리사이즈를 위해)
+            if (!pnrPane.style.width || pnrPane.style.width === 'auto') {
+                const currentPnrWidth = pnrPane.offsetWidth;
+                const currentQuoteWidth = quotePane.offsetWidth;
+                pnrPane.style.width = currentPnrWidth + 'px';
+                quotePane.style.width = currentQuoteWidth + 'px';
+            }
 
             // Temporarily disable flex-grow/shrink to set widths explicitly
             pnrPane.style.flex = 'none';
@@ -3257,21 +3265,25 @@ function setupEventListeners() {
                 const quoteWidth = rect.width - pnrWidth - resizerWidth;
 
                 // Set explicit widths on both panes
-                pnrPane.style.width = pnrWidth + 'px';
-                quotePane.style.width = quoteWidth + 'px';
+                pnrPane.style.setProperty('width', pnrWidth + 'px', 'important');
+                quotePane.style.setProperty('width', quoteWidth + 'px', 'important');
             };
             
             const onMouseUp = () => {
-        document.body.style.cursor = 'default';
-        document.body.style.userSelect = 'auto';
+                document.body.style.cursor = 'default';
+                document.body.style.userSelect = 'auto';
 
-        // Restore flex behavior by removing the inline style
-        pnrPane.style.removeProperty('flex');
-        quotePane.style.removeProperty('flex');
+                // flex 속성 복원 (width는 유지)
+                pnrPane.style.flex = '0 0 auto';  // width 기반으로 고정 크기 유지
+                quotePane.style.flex = '0 0 auto'; // width 기반으로 고정 크기 유지
+                
+                // width는 제거하지 않고 유지 (다음 리사이즈를 위해 필요)
+                // pnrPane.style.removeProperty('width');  // 주석 처리
+                // quotePane.style.removeProperty('width'); // 주석 처리
 
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    };
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
 
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
