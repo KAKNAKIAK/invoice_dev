@@ -1,3 +1,4 @@
+
 // =======================================================================
 // 1. 전역 변수 및 설정
 // =======================================================================
@@ -1304,20 +1305,47 @@ function hm_addHotelsFromDbToGroup(groupId, hotelsToAdd) {
     hm_render(groupId);
 }
 
+/**
+ * [수정됨] 호텔 카드 HTML 생성 함수
+ * .txt 파일 기준의 <div> 및 flex 레이아웃으로 변경
+ * @param {object} hotel - 호텔 정보 객체
+ * @returns {string} - <div> 기반 HTML 조각
+ */
 function hm_generateHotelCardHtml(hotel) {
     const placeholderImage = 'https://placehold.co/400x300/e2e8f0/cbd5e0?text=No+Image';
     const currentHotelImage = (typeof hotel.image === 'string' && hotel.image.startsWith('http')) ? hotel.image : placeholderImage;
 
     const descriptionItems = hotel.description ? hotel.description.split('\n').filter(line => line.trim() !== '') : [];
     const descriptionHtml = descriptionItems.map(item => `
-        <div style="margin-bottom: 6px; line-height: 1.6;"><span style="font-size: 12px; color: #34495e;">${item.replace(/● /g, '')}</span></div>`).join('');
+      <div style="margin-bottom: 6px; line-height: 1.6;"><span style="font-size: 12px; color: #34495e;">${item.replace(/● /g, '')}</span></div>`).join('');
 
     const websiteButtonHtml = hotel.website ? `
-        <div style="margin-top: 20px;"><a href="${hotel.website}" target="_blank" style="background-color: #3498db; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">웹사이트 바로가기</a></div>` : '';
+      <div style="margin-top: 20px;"><a href="${hotel.website}" target="_blank" style="background-color: #3498db; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">웹사이트 바로가기</a></div>` : '';
 
+    // 기존 <table> 기반 코드를 <div> 기반(첨부파일) 코드로 대체
     return `
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 750px; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; border-collapse: separate; border-spacing: 24px;"><tbody><tr><td width="320" style="width: 320px; vertical-align: top;"><table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;"><tbody><tr><td><img src="${currentHotelImage}" alt="${hotel.nameKo || '호텔 이미지'}" width="320" style="width: 100%; height: auto; display: block;" onerror="this.onerror=null; this.src='${placeholderImage}';"></td></tr><tr><td style="padding: 16px 20px;"><div style="font-size: 14px; font-weight: bold; color: #2c3e50;">${hotel.nameKo || '호텔명 없음'}</div>${hotel.nameEn ? `<div style="font-size: 12px; color: #7f8c8d; margin-top: 4px;">${hotel.nameEn}</div>` : ''}</td></tr></tbody></table></td><td style="vertical-align: middle;"><div>${descriptionHtml}${websiteButtonHtml}</div></td></tr></tbody></table>`;
+<div style="max-width: 750px; margin: 24px auto; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; display: flex; flex-wrap: wrap; align-items: center; box-sizing: border-box;">
+
+  <div style="width: 100%; max-width: 320px; margin-right: 24px; margin-bottom: 24px; box-sizing: border-box;">
+    <div style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
+      <img src="${currentHotelImage}" alt="${hotel.nameKo || '호텔 이미지'}" style="width: 100%; height: auto; display: block;" onerror="this.onerror=null; this.src='${placeholderImage}';">
+      <div style="padding: 16px 20px;">
+        <div style="font-size: 14px; font-weight: bold; color: #2c3e50;">${hotel.nameKo || '호텔명 없음'}</div>
+        ${hotel.nameEn ? `<div style="font-size: 12px; color: #7f8c8d; margin-top: 4px;">${hotel.nameEn}</div>` : ''}
+      </div>
+    </div>
+  </div>
+
+  <div style="flex: 1; min-width: 300px; vertical-align: middle; box-sizing: border-box;">
+    <div>
+      ${descriptionHtml}
+      ${websiteButtonHtml}
+    </div>
+  </div>
+
+</div>`;
 }
+
 
 function hm_generateFullPreviewHtml(data) {
     const hotelName = data.length > 0 ? data[0].nameKo : '호텔';
@@ -1612,28 +1640,72 @@ function ip_handleInlinePreview(groupId) {
     const previewWindow = window.open('', '_blank');
     if (previewWindow) { previewWindow.document.write(html); previewWindow.document.close(); } else { showToastMessage("팝업이 차단되었습니다.", true); }
 }
+
+/**
+ * [수정됨] 일정표 HTML 생성 함수
+ * 완전한 HTML 문서가 아닌, .txt 파일 기준의 <main>...</main> HTML 조각(fragment)을 생성하도록 변경
+ * @param {object} itineraryData - 일정표 데이터
+ * @param {object} options - 옵션 (현재 사용되지 않음)
+ * @returns {string} - <main> 기반 HTML 조각
+ */
 function ip_generateInlineStyledHTML(itineraryData, options = {}) {
     let daysHTML = '';
     (itineraryData.days || []).forEach((day, dayIndex) => {
         let activitiesHTML = (day.activities || []).map(activity => {
-            const imageHTML = activity.imageUrl ? `<details open style="margin-top:8px;"><summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">🖼️ 사진</summary><img src="${activity.imageUrl}" alt="${activity.title}" style="max-width:300px;height:auto;border-radius:4px;margin-top:8px;" onerror="this.style.display='none';"></details>` : '';
+            const imageHTML = activity.imageUrl ? `
+              <details open style="margin-top:8px;">
+                <summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">🖼️ 사진</summary>
+                <img src="${activity.imageUrl}" alt="${activity.title}" style="max-width: 100%; height:auto;border-radius:4px;margin-top:8px;" onerror="this.style.display='none';">
+              </details>` : '';
+            
             const locationHTML = activity.locationLink ? `<div style="font-size:12px;margin-top:4px;">📍 <a href="${activity.locationLink}" target="_blank" rel="noopener noreferrer" style="color:#007bff;text-decoration:none;">위치 보기</a></div>` : '';
             const costHTML = activity.cost ? `<div style="font-size:12px;margin-top:4px;">💰 ${activity.cost}</div>` : '';
             const notesHTML = activity.notes ? `<div style="font-size:12px;margin-top:4px;white-space:pre-wrap;">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
             const descHTML = activity.description ? `<div style="font-size:12px;white-space:pre-wrap;">${activity.description.replace(/\n/g, '<br>')}</div>` : '';
-            return `<div style="background-color:white;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:16px;display:flex;"><div style="width:100px;flex-shrink:0;"><div style="font-size:20px;margin-bottom:4px;">${activity.icon || '&nbsp;'}</div><div style="font-size:12px;font-weight:bold;">${ip_formatTimeToHHMM(activity.time) || '&nbsp;'}</div></div><div style="flex-grow:1;"><div style="font-size:13px;font-weight:bold;">${activity.title || ''}</div>${descHTML}${imageHTML}${locationHTML}${costHTML}${notesHTML}</div></div>`;
+            
+            return `
+          <div style="background-color:white;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:16px;display:flex; align-items: flex-start;">
+            <div style="width:100px;flex-shrink:0;">
+              <div style="font-size:20px;margin-bottom:4px;">${activity.icon || ' '}</div>
+              <div style="font-size:12px;font-weight:bold;">${ip_formatTimeToHHMM(activity.time) || ' '}</div>
+            </div>
+            <div style="flex-grow:1; overflow: hidden;">
+              <div style="font-size:13px;font-weight:bold;">${activity.title || ''}</div>
+              ${descHTML}
+              ${imageHTML}
+              ${locationHTML}
+              ${costHTML}
+              ${notesHTML}
+            </div>
+          </div>`;
         }).join('');
-        
-        daysHTML += `<div style="margin-bottom: 16px;"><details ${day.isCollapsed ? '' : 'open'}><summary style="display: flex; align-items: center; padding: 12px 8px; border-bottom: 1px solid #EEE; background-color: #fdfdfd; cursor: pointer;"><h2 style="font-size: 14px; font-weight: 600; margin:0;">${ip_formatDate(day.date, dayIndex + 1)}</h2></summary><div style="padding: 8px;"><div style="padding-top: .75rem;">${activitiesHTML || '<p style="font-size:12px;color:#777;">일정이 없습니다.</p>'}</div></div></details></div>`;
+
+        daysHTML += `
+  <div style="margin-bottom: 16px;">
+    <details ${day.isCollapsed ? '' : 'open'}>
+      <summary style="display: flex; align-items: center; padding: 12px 8px; border-bottom: 1px solid #EEE; background-color: #fdfdfd; cursor: pointer;">
+        <h2 style="font-size: 14px; font-weight: 600; margin:0;">${ip_formatDate(day.date, dayIndex + 1)}</h2>
+      </summary>
+      <div style="padding: 8px;">
+        <div style="padding-top: .75rem;">
+          ${activitiesHTML || '<p style="font-size:12px;color:#777;">일정이 없습니다.</p>'}
+        </div>
+      </div>
+    </details>
+  </div>`;
     });
 
-    const styles = `body{font-family:-apple-system,sans-serif;margin:0;background:#f8f9fa;}main{max-width:768px;margin:auto;padding:1rem;}header{background:white;border-bottom:1px solid #E0E0E0;padding:1rem;text-align:center;}h1{font-size:18px;font-weight:bold;margin:0;}h2{font-size:14px;font-weight:600;margin:0;}summary{list-style:none;}summary::-webkit-details-marker{display:none;}`;
-    const styleTagHTML = options.includeStyles ? `<style>${styles}</style>` : '';
-
-    const pageDocumentTitle = options.makePageTitleEmptyForCopy ? ' ' : (itineraryData.title || "여행 일정");
-    
-    return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${pageDocumentTitle}</title>${styleTagHTML}</head><body><header><h1>${itineraryData.title}</h1></header><main>${daysHTML}</main></body></html>`;
+    // .txt 파일 형식에 맞춰 <main>과 <header> 태그로 감싸진 HTML 조각을 반환합니다.
+    return `
+<main style="max-width: 750px; margin: auto; padding: 0 16px; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;">
+  <header style="padding-top: 24px;">
+    <h1 style="font-size: 24px; font-weight: bold;">${itineraryData.title}</h1>
+  </header>
+  ${daysHTML}
+</main>`;
 }
+
+
 function ip_recalculateAllDates(groupId) {
     const itineraryData = quoteGroupsData[groupId].itineraryData;
     if (itineraryData.days && itineraryData.days.length > 0 && itineraryData.days[0].date) {
