@@ -1664,10 +1664,10 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
             const descHTML = activity.description ? `<div style="font-size:12px;white-space:pre-wrap;">${activity.description.replace(/\n/g, '<br>')}</div>` : '';
             
             return `
-          <div style="background-color:white;border-radius:8px;border:1px solid #E0E0E0;padding:16px;margin-bottom:16px;display:flex; align-items: flex-start;">
-            <div style="width:100px;flex-shrink:0;">
+          <div style="background-color:white;border-radius:8px;border:1px solid #E0E0E0;padding:10px;margin-bottom:10px;display:flex; align-items: flex-start;">
+            <div style="width:50px;flex-shrink:0;margin-right:10px;">
               <div style="font-size:20px;margin-bottom:4px;">${activity.icon || ' '}</div>
-              <div style="font-size:12px;font-weight:bold;">${ip_formatTimeToHHMM(activity.time) || ' '}</div>
+              <div style="font-size:12px;font-weight:bold;white-space:nowrap;">${ip_formatTimeToHHMM(activity.time) || ' '}</div>
             </div>
             <div style="flex-grow:1; overflow: hidden;">
               <div style="font-size:13px;font-weight:bold;">${activity.title || ''}</div>
@@ -1681,13 +1681,11 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
         }).join('');
 
         daysHTML += `
-  <div style="margin-bottom: 16px;">
-    <details ${day.isCollapsed ? '' : 'open'}>
-      <summary style="display: flex; align-items: center; padding: 12px 8px; border-bottom: 1px solid #EEE; background-color: #fdfdfd; cursor: pointer;">
+  <div style="margin-bottom: 10px;"> <details ${day.isCollapsed ? '' : 'open'}>
+      <summary style="display: flex; align-items: center; padding: 10px 8px; border-bottom: 1px solid #EEE; background-color: #fdfdfd; cursor: pointer;">
         <h2 style="font-size: 14px; font-weight: 600; margin:0;">${ip_formatDate(day.date, dayIndex + 1)}</h2>
       </summary>
-      <div style="padding: 8px;">
-        <div style="padding-top: .75rem;">
+      <div style="padding: 5px;"> <div style="padding-top: 0.5rem;">
           ${activitiesHTML || '<p style="font-size:12px;color:#777;">일정이 없습니다.</p>'}
         </div>
       </div>
@@ -1696,10 +1694,10 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
     });
 
     // .txt 파일 형식에 맞춰 <main>과 <header> 태그로 감싸진 HTML 조각을 반환합니다.
+    // [수정] main 태그의 padding: 0 16px -> 0 으로 변경하여 전체 컨테이너 여백 제거
     return `
-<main style="max-width: 750px; margin: auto; padding: 0 16px; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;">
-  <header style="padding-top: 24px;">
-    <h1 style="font-size: 24px; font-weight: bold;">${itineraryData.title}</h1>
+<main style="max-width: 750px; margin: auto; padding: 0; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;">
+  <header style="padding-top: 15px;"> <h1 style="font-size: 24px; font-weight: bold;">${itineraryData.title}</h1>
   </header>
   ${daysHTML}
 </main>`;
