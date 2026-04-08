@@ -247,6 +247,36 @@ body {
     color: #4f46e5; /* indigo-600 */
 }
 
+/* Itinerary activity modal: use stacked labels to avoid text overlap */
+#ipActivityModal .form-field {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+}
+#ipActivityModal .form-field label {
+    position: static;
+    color: #334155;
+    font-size: 0.83rem;
+    font-weight: 600;
+    pointer-events: auto;
+}
+#ipActivityModal .form-field .input-field {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+#ipActivityModal .form-field textarea.input-field {
+    min-height: 6rem;
+    resize: vertical;
+}
+#ipActivityModal .form-field .input-field:focus + label,
+#ipActivityModal .form-field .input-field:not(:placeholder-shown) + label {
+    top: auto;
+    font-size: 0.83rem;
+    color: #334155;
+}
+
 /* Itinerary Planner Styles */
 .ip-header-title-container h1 {
     display: inline-block;
