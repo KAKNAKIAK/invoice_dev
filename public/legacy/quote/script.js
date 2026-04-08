@@ -1655,7 +1655,24 @@ function ip_openActivityModal(groupId, dayIndex, activityIndex = -1) {
     activityIconSelect.innerHTML = ip_travelEmojis.map(emoji => `<option value="${emoji.value}">${emoji.display}</option>`).join('');
     if (activityIndex > -1) {
         const activity = quoteGroupsData[groupId].itineraryData.days[dayIndex].activities[activityIndex];
-        Object.keys(activity).forEach(key => { const input = form.querySelector(`#ipActivity${key.charAt(0).toUpperCase() + key.slice(1)}`); if (input) input.value = activity[key] || ''; });
+        if (!activity) {
+            showToastMessage('수정할 일정 데이터를 찾을 수 없습니다.', true);
+            return;
+        }
+
+        const setValue = (selector, value) => {
+            const field = form.querySelector(selector);
+            if (field) field.value = value ?? '';
+        };
+
+        setValue('#ipActivityTimeInput', activity.time);
+        setValue('#ipActivityTitle', activity.title);
+        setValue('#ipActivityDescription', activity.description);
+        setValue('#ipActivityLocation', activity.locationLink);
+        setValue('#ipActivityImageUrl', activity.imageUrl);
+        setValue('#ipActivityCost', activity.cost);
+        setValue('#ipActivityNotes', activity.notes);
+        activityIconSelect.value = activity.icon ?? '';
     }
     modal.classList.remove('hidden');
 }
