@@ -57,42 +57,6 @@
     );
   }
 
-  function Header(props) {
-    return e(
-      "header",
-      { className: "top-bar" },
-      e(
-        "div",
-        { className: "brand" },
-        e("h1", null, "Invoice Dev"),
-        e("p", null, "Workspace")
-      ),
-      e(
-        "nav",
-        { "aria-label": "Primary" },
-        e(
-          "ul",
-          { className: "nav-list" },
-          NAV_ITEMS.map(function (item) {
-            var isActive = props.route === item.to;
-            return e(
-              "li",
-              { key: item.to },
-              e(
-                "a",
-                {
-                  href: "#" + item.to,
-                  className: isActive ? "nav-link active" : "nav-link"
-                },
-                item.label
-              )
-            );
-          })
-        )
-      )
-    );
-  }
-
   function App() {
     var _React$useState = React.useState(ensureValidRoute(currentRoute())),
       route = _React$useState[0],
@@ -115,7 +79,6 @@
     return e(
       "div",
       { className: "app-shell" },
-      e(Header, { route: route }),
       e("main", { className: "page-content" }, e(ToolFrame, { path: current.framePath, title: current.title }))
     );
   }
