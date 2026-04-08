@@ -1400,8 +1400,10 @@ const ip_saveIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 2
 const ip_cancelIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
 const ip_deleteIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
 const ip_duplicateIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+const ip_syncFromDbIconSVG = `<svg fill="none" class="w-4 h-4" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>`;
 let ipPendingNewActivityGroupId = null;
 let ipPendingNewActivityDayIndex = null;
+let ipPendingSyncActivityIndex = null;
 let ipAllFetchedAttractions = [];
 
 function ip_generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
@@ -1577,11 +1579,38 @@ function ip_renderActivities(activitiesListElement, activities, dayIndex, groupI
         const locHTML = activity.locationLink ? `<div class="card-location">📍 <a href="${activity.locationLink}" target="_blank" title="${activity.locationLink}">${locationText}</a></div>` : '';
         const costHTML = activity.cost ? `<div class="card-cost">💰 ${activity.cost}</div>` : '';
         const notesHTML = activity.notes ? `<div class="card-notes">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
-        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
+        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button card-action-icon-button sync-activity-from-db-button" title="관광지 DB 최신 정보로 덮어쓰기">${ip_syncFromDbIconSVG}</button><button class="icon-button card-action-icon-button edit-activity-button" title="수정">${ip_editIconSVG}</button><button class="icon-button card-action-icon-button duplicate-activity-button" title="복제">${ip_duplicateIconSVG}</button><button class="icon-button card-action-icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
         
-        // 삭제 버튼만 직접 이벤트 바인딩 (강화된 버전)
+        // 카드 액션 버튼 이벤트를 카드 렌더 시점에 직접 바인딩
         const deleteBtn = card.querySelector('.delete-activity-button');
-        
+        const syncBtn = card.querySelector('.sync-activity-from-db-button');
+        const editBtn = card.querySelector('.edit-activity-button');
+        const duplicateBtn = card.querySelector('.duplicate-activity-button');
+
+        if (syncBtn) {
+            syncBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ip_openSyncActivityFromDbModal(groupId, dayIndex, activityIndex);
+            });
+        }
+
+        if (editBtn) {
+            editBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ip_openActivityModal(groupId, dayIndex, activityIndex);
+            });
+        }
+
+        if (duplicateBtn) {
+            duplicateBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ip_handleDuplicateActivity(groupId, dayIndex, activityIndex);
+            });
+        }
+
         if (deleteBtn) {
             // 여러 방법으로 이벤트 바인딩
             deleteBtn.onclick = function(e) {
@@ -1658,11 +1687,13 @@ function ip_handleActivityDoubleClick(event, groupId) {
 function ip_resetPendingAddActivityState() {
     ipPendingNewActivityGroupId = null;
     ipPendingNewActivityDayIndex = null;
+    ipPendingSyncActivityIndex = null;
 }
 
 function ip_openAddActivityChoiceModal(groupId, dayIndex) {
     ipPendingNewActivityGroupId = groupId;
     ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
+    ipPendingSyncActivityIndex = null;
     const modal = document.getElementById('ipAddActivityChoiceModal');
     if (modal) modal.classList.remove('hidden');
 }
@@ -1674,6 +1705,13 @@ function ip_closeAddActivityChoiceModal() {
 
 function ip_openBlankActivityModal(groupId, dayIndex) {
     ip_openActivityModal(groupId, dayIndex, -1);
+}
+
+function ip_openSyncActivityFromDbModal(groupId, dayIndex, activityIndex) {
+    ipPendingNewActivityGroupId = groupId;
+    ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
+    ipPendingSyncActivityIndex = parseInt(activityIndex, 10);
+    ip_loadAttractionListFromFirestore();
 }
 
 function ip_closeLoadAttractionModal() {
@@ -1691,6 +1729,29 @@ function ip_addActivityFromAttraction(attraction) {
     const day = quoteGroupsData[groupId]?.itineraryData?.days?.[dayIndex];
     if (!day) {
         showToastMessage('선택한 날짜 정보를 찾을 수 없습니다.', true);
+        ip_resetPendingAddActivityState();
+        return;
+    }
+
+    if (Number.isInteger(ipPendingSyncActivityIndex)) {
+        const targetActivity = day.activities[ipPendingSyncActivityIndex];
+        if (!targetActivity) {
+            showToastMessage('동기화할 기존 일정을 찾지 못했습니다.', true);
+            ip_resetPendingAddActivityState();
+            return;
+        }
+
+        targetActivity.icon = attraction.icon || '';
+        targetActivity.title = attraction.title || '';
+        targetActivity.description = attraction.description || '';
+        targetActivity.locationLink = attraction.locationLink || attraction.location || '';
+        targetActivity.imageUrl = attraction.imageUrl || '';
+        targetActivity.cost = attraction.cost || '';
+        targetActivity.notes = attraction.notes || '';
+
+        ip_render(groupId);
+        ip_closeLoadAttractionModal();
+        showToastMessage(`DAY ${dayIndex + 1} 일정을 "${attraction.title || '관광지 정보'}"로 동기화했습니다.`);
         ip_resetPendingAddActivityState();
         return;
     }

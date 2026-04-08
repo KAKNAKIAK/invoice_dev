@@ -291,9 +291,23 @@ body {
 }
 
 .icon-button {
-    background: none; border: none; cursor: pointer; padding: 0.25rem; color: #6b7280;}
-.icon-button:hover { color: #4f46e5; }
-.icon-button svg { width: 1rem; height: 1rem; }
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.icon-button:hover {
+    background-color: #e0e0e0;
+}
+.icon-button svg {
+    width: 20px;
+    height: 20px;
+    color: #555;
+}
 
 .day-header-container { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem;}
 .day-header-main { display: flex; align-items: center; }
@@ -310,7 +324,28 @@ body {
 .card-details-area { flex-grow: 1; }
 .card-title { font-weight: 600; margin-bottom: 0.25rem; }
 .card-description, .card-location, .card-cost, .card-notes { font-size: 0.875rem; color: #4b5563; }
-.card-actions-direct { display: flex; flex-direction: column; }
+.card-actions-direct {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-left: auto;
+    padding-left: 0.5rem;
+}
+.card-action-icon-button svg {
+    width: 18px;
+    height: 18px;
+    color: #6b7280;
+}
+.card-action-icon-button:hover svg {
+    color: #4b5563;
+}
+.card-action-icon-button.delete-activity-button svg {
+    color: #ef4444;
+}
+.card-action-icon-button.delete-activity-button:hover svg {
+    color: #dc2626;
+}
 
 /* Hotel Maker Styles */
 .hm-tabs-container .hotel-tab-button {
