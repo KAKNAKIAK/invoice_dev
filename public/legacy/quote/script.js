@@ -629,7 +629,7 @@ function rebindWorkspaceEventListeners() {
                     else if (button.classList.contains('save-date-button')) ip_handleSaveDate(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId, button.previousElementSibling.value);
                     else if (button.classList.contains('cancel-date-edit-button')) ip_handleCancelDateEdit(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                     else if (button.classList.contains('delete-day-button')) ip_showConfirmDeleteDayModal(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
-                    else if (button.classList.contains('add-activity-button')) ip_openActivityModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
+                    else if (button.classList.contains('add-activity-button')) ip_openAddActivityChoiceModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
                     else if (button.classList.contains('edit-activity-button')) {
                         console.log('편집 버튼 클릭됨 - 현재 비활성화됨');
                         // 편집 기능 비활성화
@@ -1394,6 +1394,9 @@ const ip_saveIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 2
 const ip_cancelIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
 const ip_deleteIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
 const ip_duplicateIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+let ipPendingNewActivityGroupId = null;
+let ipPendingNewActivityDayIndex = null;
+let ipAllFetchedAttractions = [];
 
 function ip_generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
 function dateToYyyyMmDd(date) {
@@ -1644,6 +1647,132 @@ function ip_handleToggleDayCollapse(event, dayIndex, groupId) {
 function ip_handleActivityDoubleClick(event, groupId) {
     const card = event.target.closest('.ip-activity-card');
     if (card) { ip_openActivityModal(groupId, parseInt(card.dataset.dayIndex), parseInt(card.dataset.activityIndex)); }
+}
+
+function ip_resetPendingAddActivityState() {
+    ipPendingNewActivityGroupId = null;
+    ipPendingNewActivityDayIndex = null;
+}
+
+function ip_openAddActivityChoiceModal(groupId, dayIndex) {
+    ipPendingNewActivityGroupId = groupId;
+    ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
+    const modal = document.getElementById('ipAddActivityChoiceModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function ip_closeAddActivityChoiceModal() {
+    const modal = document.getElementById('ipAddActivityChoiceModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function ip_openBlankActivityModal(groupId, dayIndex) {
+    ip_openActivityModal(groupId, dayIndex, -1);
+}
+
+function ip_closeLoadAttractionModal() {
+    const modal = document.getElementById('ipLoadAttractionModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function ip_addActivityFromAttraction(attraction) {
+    const groupId = ipPendingNewActivityGroupId;
+    const dayIndex = ipPendingNewActivityDayIndex;
+    if (!groupId || !Number.isInteger(dayIndex)) {
+        showToastMessage('일정을 추가할 대상 날짜를 찾을 수 없습니다.', true);
+        return;
+    }
+    const day = quoteGroupsData[groupId]?.itineraryData?.days?.[dayIndex];
+    if (!day) {
+        showToastMessage('선택한 날짜 정보를 찾을 수 없습니다.', true);
+        ip_resetPendingAddActivityState();
+        return;
+    }
+
+    day.activities.push({
+        id: ip_generateId(),
+        time: '',
+        icon: attraction.icon || '',
+        title: attraction.title || '',
+        description: attraction.description || '',
+        locationLink: attraction.locationLink || attraction.location || '',
+        imageUrl: attraction.imageUrl || '',
+        cost: attraction.cost || '',
+        notes: attraction.notes || ''
+    });
+
+    ip_render(groupId);
+    showToastMessage(`"${attraction.title || '새 일정'}" 항목을 DAY ${dayIndex + 1}에 추가했습니다.`);
+}
+
+function ip_renderFilteredAttractionList() {
+    const listEl = document.getElementById('ipAttractionList');
+    const searchInput = document.getElementById('ipAttractionSearchInput');
+    const loadingMsg = document.getElementById('ipLoadingAttractionMsg');
+    if (!listEl || !searchInput) return;
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    listEl.innerHTML = '';
+
+    const filteredAttractions = ipAllFetchedAttractions.filter((attraction) =>
+        (attraction.title || '').toLowerCase().includes(searchTerm)
+    );
+
+    if (filteredAttractions.length === 0) {
+        const isLoading = loadingMsg && loadingMsg.style.display !== 'none';
+        if (!isLoading) {
+            if (searchTerm) {
+                listEl.innerHTML = `<li class="p-2 text-gray-500">"${searchTerm}" 검색 결과가 없습니다.</li>`;
+            } else {
+                listEl.innerHTML = '<li class="p-2 text-gray-500">등록된 관광지 데이터가 없습니다.</li>';
+            }
+        }
+        return;
+    }
+
+    filteredAttractions.forEach((attraction) => {
+        const li = document.createElement('li');
+        li.className = 'p-3 hover:bg-gray-100 cursor-pointer';
+        li.innerHTML = `
+            <div class="font-medium flex items-center gap-2">
+                <span>${attraction.icon || ''}</span>
+                <span>${attraction.title || '(제목 없음)'}</span>
+            </div>
+            ${attraction.description ? `<div class="text-xs text-gray-500 mt-1">${attraction.description}</div>` : ''}
+        `;
+        li.addEventListener('click', () => ip_addActivityFromAttraction(attraction));
+        listEl.appendChild(li);
+    });
+}
+
+async function ip_loadAttractionListFromFirestore() {
+    const modal = document.getElementById('ipLoadAttractionModal');
+    const listEl = document.getElementById('ipAttractionList');
+    const loadingMsg = document.getElementById('ipLoadingAttractionMsg');
+    const searchInput = document.getElementById('ipAttractionSearchInput');
+    if (!modal || !listEl || !loadingMsg || !searchInput) {
+        showToastMessage('관광지 DB 불러오기 UI를 찾을 수 없습니다.', true);
+        return;
+    }
+
+    modal.classList.remove('hidden');
+    loadingMsg.style.display = 'block';
+    listEl.innerHTML = '';
+    searchInput.value = '';
+    ipAllFetchedAttractions = [];
+
+    try {
+        const querySnapshot = await ipDb.collection('attractions').orderBy('title').get();
+        querySnapshot.forEach((doc) => {
+            ipAllFetchedAttractions.push({ id: doc.id, ...doc.data() });
+        });
+    } catch (error) {
+        console.error('[itinerary] 관광지 목록 로드 실패:', error);
+        showToastMessage('관광지 DB 목록 불러오기 중 오류가 발생했습니다.', true);
+    } finally {
+        loadingMsg.style.display = 'none';
+        ip_renderFilteredAttractionList();
+    }
 }
 
 function ip_openActivityModal(groupId, dayIndex, activityIndex = -1) {
@@ -3231,6 +3360,30 @@ function setupEventListeners() {
         if(event.target.closest('#ipCloseLoadTemplateModal, #ipCancelLoadTemplateModal')) {
             document.getElementById('ipLoadTemplateModal').classList.add('hidden');
         }
+        if (event.target.closest('#ipCloseLoadAttractionModal, #ipCancelLoadAttractionModal')) {
+            ip_closeLoadAttractionModal();
+            ip_resetPendingAddActivityState();
+        }
+        if (event.target.closest('#ipChoiceCancelBtn')) {
+            ip_closeAddActivityChoiceModal();
+            ip_resetPendingAddActivityState();
+        }
+        if (event.target.closest('#ipChoiceFromDbBtn')) {
+            ip_closeAddActivityChoiceModal();
+            ip_loadAttractionListFromFirestore();
+        }
+        if (event.target.closest('#ipChoiceNewInputBtn')) {
+            const groupId = ipPendingNewActivityGroupId;
+            const dayIndex = ipPendingNewActivityDayIndex;
+            ip_closeAddActivityChoiceModal();
+            if (groupId && Number.isInteger(dayIndex)) {
+                ip_openBlankActivityModal(groupId, dayIndex);
+                ip_resetPendingAddActivityState();
+            } else {
+                showToastMessage('새 일정 추가 대상 날짜를 찾을 수 없습니다.', true);
+                ip_resetPendingAddActivityState();
+            }
+        }
     });
 
     // --- 동적 컨텐츠 컨테이너 (이벤트 위임) ---
@@ -3395,7 +3548,7 @@ function setupEventListeners() {
             else if (button.classList.contains('save-date-button')) ip_handleSaveDate(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId, button.previousElementSibling.value);
             else if (button.classList.contains('cancel-date-edit-button')) ip_handleCancelDateEdit(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
             else if (button.classList.contains('delete-day-button')) ip_showConfirmDeleteDayModal(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
-            else if (button.classList.contains('add-activity-button')) ip_openActivityModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
+            else if (button.classList.contains('add-activity-button')) ip_openAddActivityChoiceModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
             else if (button.classList.contains('edit-activity-button')) {
                 const card = button.closest('.ip-activity-card');
                 ip_openActivityModal(groupId, card.dataset.dayIndex, card.dataset.activityIndex);
@@ -3485,6 +3638,10 @@ function setupEventListeners() {
     });
     
     document.getElementById('ipActivityForm').addEventListener('submit', ip_handleActivityFormSubmit);
+    const ipAttractionSearchInput = document.getElementById('ipAttractionSearchInput');
+    if (ipAttractionSearchInput) {
+        ipAttractionSearchInput.addEventListener('input', ip_renderFilteredAttractionList);
+    }
     
     document.addEventListener('mousedown', (e) => {
         if (e.target.matches('.resizer-handle')) {
