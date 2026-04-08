@@ -1516,7 +1516,7 @@ function ip_renderDays(groupId, container) {
         daysContainer.querySelectorAll('.activities-list').forEach(list => {
             new Sortable(list, {
                 group: `shared-activities-${groupId}`,
-                handle: '.ip-card-drag-handle',
+                handle: '.ip-activity-card',
                 draggable: '.ip-activity-card',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
