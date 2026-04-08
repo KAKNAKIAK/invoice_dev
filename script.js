@@ -2503,6 +2503,16 @@ function initializeGroup(groupEl, groupId) {
         <div class="xl:w-1/2 space-y-6 right-panel-container"> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-semibold">요금 안내</h2>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" class="btn btn-sm btn-outline copy-price-info-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
+                        <button type="button" class="btn btn-sm btn-green add-price-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
+                    </div>
+                </div>
+                <div class="space-y-4 price-info-container"></div>
+            </section> 
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+                <div class="flex justify-between items-center mb-4">
                     <h2 class="text-base font-semibold">항공 스케줄</h2>
                     <div class="flex items-center space-x-2">
                         <button type="button" class="btn btn-sm btn-outline copy-flight-schedule-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
@@ -2511,16 +2521,6 @@ function initializeGroup(groupEl, groupId) {
                     </div>
                 </div>
                 <div class="space-y-4 flight-schedule-container"></div>
-            </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">요금 안내</h2>
-                    <div class="flex items-center space-x-2">
-                        <button type="button" class="btn btn-sm btn-outline copy-price-info-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
-                        <button type="button" class="btn btn-sm btn-green add-price-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
-                    </div>
-                </div>
-                <div class="space-y-4 price-info-container"></div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
