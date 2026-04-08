@@ -268,6 +268,23 @@ body {
 .day-header-container { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem;}
 .day-header-main { display: flex; align-items: center; }
 .day-header-title { font-weight: 600; }
+.ip-day-drag-handle,
+.ip-card-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1;
+    user-select: none;
+    touch-action: none;
+    cursor: grab;
+    flex-shrink: 0;
+}
+.ip-day-drag-handle { margin-right: 0.5rem; }
+.ip-card-drag-handle { padding: 0.15rem 0.35rem; margin-right: 0.2rem; }
+.ip-day-drag-handle:active,
+.ip-card-drag-handle:active { cursor: grabbing; }
 
 .activity-card { display: flex; gap: 0.75rem; padding: 0.75rem; border-radius: 0.25rem; background-color: white; border: 1px solid #e5e7eb; /* Add a subtle border */}
 .activity-card:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }

@@ -1,7 +1,7 @@
 // service-worker.js ('Network First' 전략 적용)
 
 // 캐시 이름은 그대로 유지하거나, 큰 구조 변경 시 버전을 올릴 수 있습니다.
-const CACHE_NAME = 'quote-calculator-cache-v2';
+const CACHE_NAME = 'quote-calculator-cache-v3';
 
 // 캐시할 파일 목록 (기존과 동일)
 const FILES_TO_CACHE = [
@@ -16,6 +16,7 @@ const FILES_TO_CACHE = [
   './itinerary_planner/index.html',
   './itinerary_planner/style.css',
   './itinerary_planner/script.js',
+  './vendor/Sortable.min.js',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png'
 ];
@@ -56,7 +57,9 @@ self.addEventListener('fetch', (event) => {
         // 응답 스트림은 한 번만 사용할 수 있으므로, 복제본을 캐시에 넣어야 합니다.
         return caches.open(CACHE_NAME).then(cache => {
           console.log('Service Worker: Fetched from network and caching new version for ' + event.request.url);
-          cache.put(event.request, response.clone());
+          if (event.request.method === 'GET') {
+            cache.put(event.request, response.clone());
+          }
           // 원본 응답을 브라우저에 반환합니다.
           return response;
         });
