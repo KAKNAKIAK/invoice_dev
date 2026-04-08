@@ -773,7 +773,10 @@ function rebindWorkspaceEventListeners() {
                     }
                 }
             });
-            
+
+            // Rebind 과정에서 cloneNode(true)로 Sortable 바인딩이 사라질 수 있어
+            // 렌더 완료 후 일정표 drag/drop을 다시 초기화한다.
+            reinitializeItineraryDragAndDrop(newContentsContainer);
             console.log('quoteGroupContentsContainer 이벤트 리스너 재바인딩 완료');
         } else {
             console.error('newContentsContainer를 찾을 수 없습니다');
@@ -1540,6 +1543,18 @@ function ip_renderDays(groupId, container) {
     } else {
         console.error('[itinerary] Sortable is undefined - drag-and-drop disabled');
     }
+}
+
+function reinitializeItineraryDragAndDrop(rootElement) {
+    if (!rootElement) return;
+    const itineraryContainers = rootElement.querySelectorAll('[id^="itinerary-planner-container-"]');
+    itineraryContainers.forEach((container) => {
+        const groupId = container.id.replace('itinerary-planner-container-', '');
+        if (quoteGroupsData[groupId] && quoteGroupsData[groupId].itineraryData) {
+            ip_render(groupId);
+            console.log('[itinerary] drag and drop reinitialized:', groupId);
+        }
+    });
 }
 function ip_renderActivities(activitiesListElement, activities, dayIndex, groupId) {
     activitiesListElement.innerHTML = '';
