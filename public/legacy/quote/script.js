@@ -1485,14 +1485,14 @@ function ip_renderDays(groupId, container) {
         let dateDisplayHTML = day.editingDate
             ? `<input type="text" class="date-edit-input-text" value="${day.date}" placeholder="YYYY-MM-DD"><button class="save-date-button icon-button" title="날짜 저장">${ip_saveIconSVG}</button><button class="cancel-date-edit-button icon-button" title="취소">${ip_cancelIconSVG}</button>`
             : `<h2 class="day-header-title">${ip_formatDate(day.date, dayIndex + 1)}</h2><button class="edit-date-button icon-button ml-2" title="날짜 수정">${ip_editIconSVG}</button>`;
-        daySection.innerHTML = `<div class="ip-day-header-container day-header-container"><div class="ip-day-header-main"><span class="ip-day-drag-handle" title="드래그로 날짜 이동" aria-label="드래그로 날짜 이동">⋮⋮</span>${dateDisplayHTML}</div><div class="ip-day-header-controls"><button class="delete-day-button icon-button" title="이 날짜 삭제">${ip_deleteIconSVG}</button><button class="day-toggle-button icon-button">${day.isCollapsed ? collapsedIcon : expandedIcon}</button></div></div><div class="day-content-wrapper ${day.isCollapsed ? 'hidden' : ''}"><div class="activities-list ip-activities-list pt-4" data-day-index="${dayIndex}"></div><button class="add-activity-button mt-4 ml-2 btn btn-sm btn-outline"><i class="fas fa-plus mr-1"></i>일정 추가</button></div>`;
+        daySection.innerHTML = `<div class="ip-day-header-container day-header-container"><div class="ip-day-header-main">${dateDisplayHTML}</div><div class="ip-day-header-controls"><button class="delete-day-button icon-button" title="이 날짜 삭제">${ip_deleteIconSVG}</button><button class="day-toggle-button icon-button">${day.isCollapsed ? collapsedIcon : expandedIcon}</button></div></div><div class="day-content-wrapper ${day.isCollapsed ? 'hidden' : ''}"><div class="activities-list ip-activities-list pt-4" data-day-index="${dayIndex}"></div><button class="add-activity-button mt-4 ml-2 btn btn-sm btn-outline"><i class="fas fa-plus mr-1"></i>일정 추가</button></div>`;
         daysContainer.appendChild(daySection);
         const activitiesList = daySection.querySelector('.activities-list');
         ip_renderActivities(activitiesList, day.activities, dayIndex, groupId);
     });
     if (typeof Sortable !== 'undefined') {
         new Sortable(daysContainer, {
-            handle: '.ip-day-drag-handle',
+            handle: '.ip-day-header-container',
             draggable: '.ip-day-section',
             animation: 150,
             ghostClass: 'sortable-ghost',
@@ -1568,7 +1568,7 @@ function ip_renderActivities(activitiesListElement, activities, dayIndex, groupI
         const locHTML = activity.locationLink ? `<div class="card-location">📍 <a href="${activity.locationLink}" target="_blank" title="${activity.locationLink}">${locationText}</a></div>` : '';
         const costHTML = activity.cost ? `<div class="card-cost">💰 ${activity.cost}</div>` : '';
         const notesHTML = activity.notes ? `<div class="card-notes">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
-        card.innerHTML = `<div class="ip-card-drag-handle" title="드래그로 일정 이동" aria-label="드래그로 일정 이동">⋮⋮</div><div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
+        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
         
         // 삭제 버튼만 직접 이벤트 바인딩 (강화된 버전)
         const deleteBtn = card.querySelector('.delete-activity-button');
