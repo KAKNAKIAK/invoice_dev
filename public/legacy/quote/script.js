@@ -1493,11 +1493,11 @@ function ip_renderDays(groupId, container) {
             draggable: '.ip-day-section',
             animation: 150,
             ghostClass: 'sortable-ghost',
-            fallbackOnBody: true,
-            forceFallback: true,
-            fallbackTolerance: 3,
             filter: 'a,button,input,textarea,select',
             preventOnFilter: false,
+            onStart: () => {
+                console.log('[itinerary] day drag started', groupId);
+            },
             onEnd: (evt) => {
                 const oldIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
                 const newIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
@@ -1517,11 +1517,11 @@ function ip_renderDays(groupId, container) {
                 draggable: '.ip-activity-card',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
-                fallbackOnBody: true,
-                forceFallback: true,
-                fallbackTolerance: 3,
                 filter: 'a,button,input,textarea,select',
                 preventOnFilter: false,
+                onStart: () => {
+                    console.log('[itinerary] activity drag started', groupId);
+                },
                 onEnd: (evt) => {
                     const fromDayIndex = ip_getDayIndexFromList(evt.from);
                     const toDayIndex = ip_getDayIndexFromList(evt.to);
