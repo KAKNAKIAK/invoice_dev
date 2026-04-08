@@ -1443,6 +1443,17 @@ function ip_render(groupId) {
     ip_renderDays(groupId, container);
     console.log(`일정 렌더링 완료: ${groupId}`);
 }
+function ip_getSortableIndex(evt, primaryKey, fallbackKey) {
+    const primaryValue = evt[primaryKey];
+    if (Number.isInteger(primaryValue)) return primaryValue;
+    const fallbackValue = evt[fallbackKey];
+    return Number.isInteger(fallbackValue) ? fallbackValue : null;
+}
+function ip_getDayIndexFromList(element) {
+    if (!element || !element.dataset) return null;
+    const dayIndex = parseInt(element.dataset.dayIndex, 10);
+    return Number.isInteger(dayIndex) ? dayIndex : null;
+}
 function ip_renderHeaderTitle(groupId, container) {
     const itineraryData = quoteGroupsData[groupId].itineraryData;
     const headerTitleSection = container.querySelector(`#ip-headerTitleSection-${groupId}`);
@@ -1477,8 +1488,53 @@ function ip_renderDays(groupId, container) {
         ip_renderActivities(activitiesList, day.activities, dayIndex, groupId);
     });
     if (typeof Sortable !== 'undefined') {
-        new Sortable(daysContainer, { handle: '.day-header-container', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const itineraryData = quoteGroupsData[groupId].itineraryData; const movedDay = itineraryData.days.splice(evt.oldIndex, 1)[0]; itineraryData.days.splice(evt.newIndex, 0, movedDay); ip_recalculateAllDates(groupId); ip_render(groupId); } });
-        daysContainer.querySelectorAll('.activities-list').forEach(list => { new Sortable(list, { group: `shared-activities-${groupId}`, handle: '.ip-activity-card', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const fromDayIndex = parseInt(evt.from.dataset.dayIndex); const toDayIndex = parseInt(evt.to.dataset.dayIndex); const itineraryData = quoteGroupsData[groupId].itineraryData; const movedActivity = itineraryData.days[fromDayIndex].activities.splice(evt.oldIndex, 1)[0]; itineraryData.days[toDayIndex].activities.splice(evt.newIndex, 0, movedActivity); ip_render(groupId); } }); });
+        new Sortable(daysContainer, {
+            handle: '.ip-day-header-main',
+            draggable: '.ip-day-section',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            fallbackOnBody: true,
+            forceFallback: true,
+            filter: 'a,button,input,textarea,select',
+            preventOnFilter: false,
+            onEnd: (evt) => {
+                const oldIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
+                const newIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
+                if (oldIndex === null || newIndex === null || oldIndex === newIndex) return;
+                const itineraryData = quoteGroupsData[groupId].itineraryData;
+                const movedDay = itineraryData.days.splice(oldIndex, 1)[0];
+                if (!movedDay) return;
+                itineraryData.days.splice(newIndex, 0, movedDay);
+                ip_recalculateAllDates(groupId);
+                ip_render(groupId);
+            }
+        });
+        daysContainer.querySelectorAll('.activities-list').forEach(list => {
+            new Sortable(list, {
+                group: `shared-activities-${groupId}`,
+                handle: '.ip-activity-card',
+                draggable: '.ip-activity-card',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                fallbackOnBody: true,
+                forceFallback: true,
+                filter: 'a,button,input,textarea,select',
+                preventOnFilter: false,
+                onEnd: (evt) => {
+                    const fromDayIndex = ip_getDayIndexFromList(evt.from);
+                    const toDayIndex = ip_getDayIndexFromList(evt.to);
+                    const oldActivityIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
+                    const newActivityIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
+                    if (fromDayIndex === null || toDayIndex === null || oldActivityIndex === null || newActivityIndex === null) return;
+                    const itineraryData = quoteGroupsData[groupId].itineraryData;
+                    if (!itineraryData.days[fromDayIndex] || !itineraryData.days[toDayIndex]) return;
+                    const movedActivity = itineraryData.days[fromDayIndex].activities.splice(oldActivityIndex, 1)[0];
+                    if (!movedActivity) return;
+                    itineraryData.days[toDayIndex].activities.splice(newActivityIndex, 0, movedActivity);
+                    ip_render(groupId);
+                }
+            });
+        });
     }
 }
 function ip_renderActivities(activitiesListElement, activities, dayIndex, groupId) {
