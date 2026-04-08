@@ -620,7 +620,13 @@ function rebindWorkspaceEventListeners() {
                 } else if (button.classList.contains('day-toggle-button')) {
                      ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                 }
-                else if(button.id.startsWith('ip-')) {
+                else if (
+                    button.id.startsWith('ip-') ||
+                    button.classList.contains('add-activity-button') ||
+                    button.classList.contains('edit-activity-button') ||
+                    button.classList.contains('duplicate-activity-button') ||
+                    button.classList.contains('delete-activity-button')
+                ) {
                     if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
                     else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
                     else if (button.id.includes('inlinePreviewButton')) ip_handleInlinePreview(groupId);
@@ -3539,7 +3545,13 @@ function setupEventListeners() {
         } else if (button.classList.contains('day-toggle-button')) {
              ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
         }
-        else if(button.id.startsWith('ip-')) {
+        else if (
+            button.id.startsWith('ip-') ||
+            button.classList.contains('add-activity-button') ||
+            button.classList.contains('edit-activity-button') ||
+            button.classList.contains('duplicate-activity-button') ||
+            button.classList.contains('delete-activity-button')
+        ) {
             if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
             else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
             else if (button.id.includes('inlinePreviewButton')) ip_handleInlinePreview(groupId);
