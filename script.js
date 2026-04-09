@@ -2539,8 +2539,20 @@ function initializeGroup(groupEl, groupId) {
                     <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">불포함</h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="불포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
                 </div>
             </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50"><h2 class="text-base font-semibold mb-4">호텔카드 메이커</h2><div id="hotel-maker-container-${groupId}"></div></section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50"><div id="itinerary-planner-container-${groupId}"></div></section> 
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-semibold">호텔카드 메이커</h2>
+                    <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
+                </div>
+                <div id="hotel-maker-container-${groupId}"></div>
+            </section> 
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-semibold">새 여행 일정표</h2>
+                    <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
+                </div>
+                <div id="itinerary-planner-container-${groupId}"></div>
+            </section> 
         </div> 
     </div>`;
 
