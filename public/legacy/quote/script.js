@@ -1984,31 +1984,38 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
         let activitiesHTML = (day.activities || []).map(activity => {
             const imageHTML = activity.imageUrl ? `
               <details open style="margin-top:8px;">
-                <summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">🖼️ 사진</summary>
+                <summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">📷 사진</summary>
                 <img src="${activity.imageUrl}" alt="${activity.title}" style="max-width: 100%; height:auto;border-radius:4px;margin-top:8px;" onerror="this.style.display='none';">
               </details>` : '';
             
-            const locationHTML = '';
+            const locationHTML = activity.locationLink ? `<div style="font-size:12px;margin-top:4px;color:#4b5563;">장소: ${activity.locationLink}</div>` : '';
             const costHTML = activity.cost ? `<div style="font-size:12px;margin-top:4px;">💰 ${activity.cost}</div>` : '';
             const notesHTML = activity.notes ? `<div style="font-size:12px;margin-top:4px;white-space:pre-wrap;">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
             const descHTML = activity.description ? `<div style="font-size:12px;white-space:pre-wrap;">${activity.description.replace(/\n/g, '<br>')}</div>` : '';
+            const summaryLabel = (activity.title || '').trim() || (activity.locationLink || '').trim() || '활동';
             
             return `
-          <div style="background-color:white;border-radius:8px;border:1px solid #E0E0E0;padding:10px;margin-bottom:10px;display:flex; align-items: flex-start;">
-            <div style="width:50px;flex-shrink:0;margin-right:10px;">
-              <div style="font-size:20px;margin-bottom:4px;">${activity.icon || ' '}</div>
-              <div style="font-size:12px;font-weight:bold;white-space:nowrap;">${ip_formatTimeToHHMM(activity.time) || ' '}</div>
-            </div>
-            <div style="flex-grow:1; overflow: hidden;">
-              <div style="font-size:13px;font-weight:bold;">${activity.title || ''}</div>
-              ${descHTML}
-              ${imageHTML}
-              ${locationHTML}
-              ${costHTML}
-              ${notesHTML}
-            </div>
-          </div>`;
+          <li style="list-style:none;margin-bottom:8px;border:1px solid #E0E0E0;border-radius:8px;background:#fff;">
+            <details>
+              <summary style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:14px;">${activity.icon || '-'}</span>
+                <span style="font-size:12px;font-weight:bold;min-width:42px;">${ip_formatTimeToHHMM(activity.time) || ''}</span>
+                <span style="font-size:13px;font-weight:600;">${summaryLabel}</span>
+              </summary>
+              <div style="padding:0 12px 12px 12px;">
+                ${descHTML}
+                ${imageHTML}
+                ${locationHTML}
+                ${costHTML}
+                ${notesHTML}
+              </div>
+            </details>
+          </li>`;
         }).join('');
+
+        if (activitiesHTML) {
+            activitiesHTML = `<ul style="margin:0;padding:0;">${activitiesHTML}</ul>`;
+        }
 
         daysHTML += `
   <div style="margin-bottom: 10px;"> <details ${day.isCollapsed ? '' : 'open'}>
