@@ -9,8 +9,8 @@ let currentFileHandle = null;
 
 const ROW_DEFINITIONS = [
     { id: 'airfare', label: '항공', type: 'costInput' }, { id: 'hotel', label: '호텔', type: 'costInput' },
-    { id: 'ground', label: '지상', type: 'costInput' }, { id: 'insurance', label: '보험', type: 'costInput' },
-    { id: 'commission', label: '커미션', type: 'costInput' }, { id: 'addDynamicRow', label: '+', type: 'button' },
+    { id: 'ground', label: '지상', type: 'costInput' }, { id: 'commission', label: '커미션', type: 'costInput' },
+    { id: 'addDynamicRow', label: '+', type: 'button' }, { id: 'insurance', label: '보험', type: 'costInput' },
     { id: 'netCost', label: '넷가', type: 'calculated' }, { id: 'salesPrice', label: '상품가', type: 'salesInput' },
     { id: 'profitPerPerson', label: '1인수익', type: 'calculated' }, { id: 'profitMargin', label: '1인수익률', type: 'calculatedPercentage' }
 ];
