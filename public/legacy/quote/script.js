@@ -1979,14 +1979,14 @@ function ip_handleInlinePreview(groupId) {
  * @returns {string} - <main> 기반 HTML 조각
  */
 function ip_generateInlineStyledHTML(itineraryData, options = {}) {
+    const hideTitleForCopy = Boolean(options.makePageTitleEmptyForCopy);
     let daysHTML = '';
     (itineraryData.days || []).forEach((day, dayIndex) => {
         let activitiesHTML = (day.activities || []).map(activity => {
             const imageHTML = activity.imageUrl ? `
-              <details open style="margin-top:8px;">
-                <summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">📷 사진</summary>
-                <img src="${activity.imageUrl}" alt="${activity.title}" style="max-width: 100%; height:auto;border-radius:4px;margin-top:8px;" onerror="this.style.display='none';">
-              </details>` : '';
+              <div style="margin-top:8px;">
+                <img src="${activity.imageUrl}" alt="${activity.title}" style="max-width: 100%; height:auto;border-radius:4px;display:block;" onerror="this.style.display='none';">
+              </div>` : '';
             
             const locationHTML = activity.locationLink ? `<div style="font-size:12px;margin-top:4px;color:#4b5563;">장소: ${activity.locationLink}</div>` : '';
             const costHTML = activity.cost ? `<div style="font-size:12px;margin-top:4px;">💰 ${activity.cost}</div>` : '';
@@ -2020,7 +2020,7 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
         daysHTML += `
   <div style="margin-bottom: 10px;"> <details ${day.isCollapsed ? '' : 'open'}>
       <summary style="display: flex; align-items: center; padding: 10px 8px; border-bottom: 1px solid #EEE; background-color: #fdfdfd; cursor: pointer;">
-        <h2 style="font-size: 14px; font-weight: 600; margin:0;">${ip_formatDate(day.date, dayIndex + 1)}</h2>
+        <div style="font-size:14px;line-height:1.4;font-weight:600;margin:0;">${ip_formatDate(day.date, dayIndex + 1)}</div>
       </summary>
       <div style="padding: 5px;"> <div style="padding-top: 0.5rem;">
           ${activitiesHTML || '<p style="font-size:12px;color:#777;">일정이 없습니다.</p>'}
@@ -2034,8 +2034,8 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
     // [수정] main 태그의 padding: 0 16px -> 0 으로 변경하여 전체 컨테이너 여백 제거
     return `
 <main style="max-width: 750px; margin: auto; padding: 0; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;">
-  <header style="padding-top: 15px;"> <h1 style="font-size: 24px; font-weight: bold;">${itineraryData.title}</h1>
-  </header>
+  ${hideTitleForCopy ? '' : `<header style="padding-top: 15px;"> <h1 style="font-size: 24px; font-weight: bold;">${itineraryData.title}</h1>
+  </header>`}
   ${daysHTML}
 </main>`;
 }
