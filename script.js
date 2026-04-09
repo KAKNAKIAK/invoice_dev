@@ -1462,6 +1462,9 @@ function ip_renderHeaderTitle(groupId, container) {
         headerTitleSection.append(input, saveButton, cancelButton); input.focus();
     } else {
         const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title;
+        titleH1.style.cursor = 'pointer';
+        titleH1.title = '클릭하여 제목 수정';
+        titleH1.addEventListener('click', () => ip_handleEditTripTitle(groupId));
         const editButton = document.createElement('button'); editButton.className = 'icon-button ml-2'; editButton.title = '여행 제목 수정'; editButton.innerHTML = ip_editIconSVG; editButton.addEventListener('click', () => ip_handleEditTripTitle(groupId));
         headerTitleSection.append(titleH1, editButton);
     }
