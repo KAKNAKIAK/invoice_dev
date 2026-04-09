@@ -1803,7 +1803,7 @@ function ip_renderActivities(activitiesListElement, activities, dayIndex, groupI
         const costHTML = activity.cost ? `<div class="card-cost">💰 ${activity.cost}</div>` : '';
         const notesHTML = activity.notes ? `<div class="card-notes">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
         const detailBodyHTML = `${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}`;
-        card.innerHTML = `<div class="ip-activity-shell"><details class="ip-activity-details"${activity.isExpanded ? ' open' : ''}><summary class="ip-activity-summary"><span class="ip-activity-drag-handle" title="드래그로 순서 이동">⋮⋮</span><span class="card-icon">${activity.icon || '&nbsp;'}</span><span class="card-time" data-time-value="${activity.time || ''}">${ip_formatTimeToHHMM(activity.time)}</span><span class="ip-activity-summary-label">${summaryLabel}</span><span class="ip-activity-summary-hint">터치/클릭</span><span class="ip-activity-summary-chevron"></span></summary><div class="ip-activity-details-body">${detailBodyHTML || '<div class="card-empty-hint">상세 정보 없음</div>'}</div></details><div class="card-actions-direct"><button class="icon-button card-action-icon-button sync-activity-from-db-button" title="관광지 DB 최신 정보로 덮어쓰기">${ip_syncFromDbIconSVG}</button><button class="icon-button card-action-icon-button edit-activity-button" title="수정">${ip_editIconSVG}</button><button class="icon-button card-action-icon-button duplicate-activity-button" title="복제">${ip_duplicateIconSVG}</button><button class="icon-button card-action-icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div></div>`;
+        card.innerHTML = `<div class="ip-activity-shell"><details class="ip-activity-details"${activity.isExpanded ? ' open' : ''}><summary class="ip-activity-summary"><span class="ip-activity-drag-handle" title="드래그로 순서 이동">⋮⋮</span><span class="card-icon">${activity.icon || '&nbsp;'}</span><span class="card-time" data-time-value="${activity.time || ''}">${ip_formatTimeToHHMM(activity.time)}</span><span class="ip-activity-summary-label">${summaryLabel}</span><span class="ip-activity-summary-hint">터치/클릭</span><span class="ip-activity-summary-chevron">⌄</span></summary><div class="ip-activity-details-body">${detailBodyHTML || '<div class="card-empty-hint">상세 정보 없음</div>'}</div></details><div class="card-actions-direct"><button class="icon-button card-action-icon-button sync-activity-from-db-button" title="관광지 DB 최신 정보로 덮어쓰기">${ip_syncFromDbIconSVG}</button><button class="icon-button card-action-icon-button edit-activity-button" title="수정">${ip_editIconSVG}</button><button class="icon-button card-action-icon-button duplicate-activity-button" title="복제">${ip_duplicateIconSVG}</button><button class="icon-button card-action-icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div></div>`;
 
         const detailsElement = card.querySelector('.ip-activity-details');
         if (detailsElement) {
@@ -2197,7 +2197,9 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
               <summary style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:8px;">
                 <span style="font-size:14px;">${activity.icon || '-'}</span>
                 <span style="font-size:12px;font-weight:bold;min-width:42px;">${ip_formatTimeToHHMM(activity.time) || ''}</span>
-                <span style="font-size:13px;font-weight:600;">${summaryLabel}</span>
+                <span style="font-size:13px;font-weight:600;flex:1;min-width:0;">${summaryLabel}</span>
+                <span style="font-size:11px;color:#64748b;white-space:nowrap;">터치/클릭</span>
+                <span style="font-size:16px;color:#64748b;line-height:1;">⌄</span>
               </summary>
               <div style="padding:0 12px 12px 12px;">
                 ${descHTML}

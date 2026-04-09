@@ -348,17 +348,15 @@ body {
     white-space: nowrap;
 }
 .ip-activity-summary-chevron {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-right: 2px solid #64748b;
-    border-bottom: 2px solid #64748b;
-    transform: rotate(45deg);
-    margin-top: -2px;
-    transition: transform 0.2s ease, margin-top 0.2s ease;
+    display: inline-block;
+    font-size: 15px;
+    color: #64748b;
+    line-height: 1;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
 }
 .ip-activity-details[open] .ip-activity-summary-chevron {
-    transform: rotate(225deg);
-    margin-top: 2px;
+    transform: rotate(180deg);
 }
 .ip-activity-details-body {
     border-top: 1px solid #e2e8f0;
