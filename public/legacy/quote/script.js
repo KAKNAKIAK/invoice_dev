@@ -2885,14 +2885,10 @@ function initializeGroup(groupEl, groupId) {
                 </div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
-                <div class="accordion-body">
-                    <div id="itinerary-planner-container-${groupId}"></div>
-                </div>
+                <div id="itinerary-planner-container-${groupId}"></div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
-                <div class="accordion-body">
-                    <div id="hotel-maker-container-${groupId}"></div>
-                </div>
+                <div id="hotel-maker-container-${groupId}"></div>
             </section> 
         </div> 
     </div>`;
