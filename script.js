@@ -619,6 +619,14 @@ function rebindWorkspaceEventListeners() {
                     if (section.classList.contains('price-subgroup')) {
                         updateGrandTotal(section, groupId);
                     }
+                } else if (button.classList.contains('accordion-toggle-btn')) {
+                    const section = button.closest('.accordion-section');
+                    const body = section.querySelector('.accordion-body');
+                    if (body) {
+                        const isHidden = body.style.display === 'none';
+                        body.style.display = isHidden ? '' : 'none';
+                        button.textContent = isHidden ? '▼' : '▶';
+                    }
                 } else if (button.classList.contains('day-toggle-button')) {
                      ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                 }
@@ -1075,6 +1083,7 @@ const hmDb = firebase.firestore(hmFbApp);
 function initializeHotelMakerForGroup(container, groupId) {
     container.innerHTML = `
         <div class="hm-controls flex items-center gap-2 mb-4" style="flex-wrap:nowrap;">
+            <button type="button" class="accordion-toggle-btn" title="접기/펼치기" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;color:#6b7280;line-height:1;">▼</button>
             <h2 class="text-base font-semibold" style="flex-shrink:0;margin:0;">호텔카드 메이커</h2>
             <div class="flex items-center gap-2" style="margin-left:auto;flex-shrink:0;">
                 <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 코드 복사</button>
@@ -1083,6 +1092,7 @@ function initializeHotelMakerForGroup(container, groupId) {
                 <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
             </div>
         </div>
+        <div class="accordion-body hm-accordion-body">
         <div id="hm-hotelTabsContainer-${groupId}" class="hm-tabs-container flex flex-wrap items-center border-b-2 border-gray-200 mb-4">
             <button id="hm-addHotelTabBtn-${groupId}" class="hotel-tab-button"><i class="fas fa-plus mr-2"></i>새 호텔 추가</button>
         </div>
@@ -1098,6 +1108,7 @@ function initializeHotelMakerForGroup(container, groupId) {
                 </div>
                 <div class="form-field mt-4"><textarea id="hm-hotelDescription-${groupId}" class="input-field" rows="4" placeholder=" "></textarea><label for="hm-hotelDescription-${groupId}">간단 설명</label></div>
             </div>
+        </div>
         </div>
     `;
 
@@ -1427,6 +1438,7 @@ function initializeItineraryPlannerForGroup(container, groupId) {
     container.innerHTML = `
         <header class="ip-header sticky top-0 z-10 py-2 px-4 -mx-4 mb-4 bg-white/80 backdrop-blur-sm">
             <div class="flex items-center gap-3" style="flex-wrap:nowrap;">
+                <button type="button" class="accordion-toggle-btn" title="접기/펼치기" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;color:#6b7280;line-height:1;">▼</button>
                 <div id="ip-headerTitleSection-${groupId}" class="ip-header-title-container" style="flex-shrink:0;"></div>
                 <div class="flex items-center gap-2" style="margin-left:auto;flex-shrink:0;">
                     <button id="ip-copyInlineHtmlButton-${groupId}" class="btn btn-sm btn-outline" title="일정표 코드 복사"><i class="fas fa-copy"></i> 코드 복사</button>
@@ -1436,7 +1448,7 @@ function initializeItineraryPlannerForGroup(container, groupId) {
                 </div>
             </div>
         </header>
-        <main class="ip-main-content">
+        <main class="ip-main-content accordion-body">
             <div id="ip-daysContainer-${groupId}" class="space-y-4"></div>
             <div class="add-day-button-container mt-6 text-center">
                 <button id="ip-addDayButton-${groupId}" class="btn btn-indigo"><i class="fas fa-plus mr-2"></i>새 날짜 추가</button>
@@ -2538,42 +2550,61 @@ function initializeGroup(groupEl, groupId) {
             </div> 
         </div> 
         <div class="xl:w-1/2 space-y-6 right-panel-container"> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">요금 안내</h2>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="accordion-toggle-btn" title="접기/펼치기" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;color:#6b7280;line-height:1;">▼</button>
+                        <h2 class="text-base font-semibold">요금 안내</h2>
+                    </div>
                     <div class="flex items-center space-x-2">
                         <button type="button" class="btn btn-sm btn-outline copy-price-info-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
                         <button type="button" class="btn btn-sm btn-green add-price-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
-                <div class="space-y-4 price-info-container"></div>
+                <div class="accordion-body">
+                    <div class="space-y-4 price-info-container"></div>
+                </div>
             </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">항공 스케줄</h2>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="accordion-toggle-btn" title="접기/펼치기" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;color:#6b7280;line-height:1;">▼</button>
+                        <h2 class="text-base font-semibold">항공 스케줄</h2>
+                    </div>
                     <div class="flex items-center space-x-2">
                         <button type="button" class="btn btn-sm btn-outline copy-flight-schedule-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
                         <button type="button" class="btn btn-sm btn-green parse-gds-btn">GDS 파싱</button>
                         <button type="button" class="btn btn-sm btn-outline add-flight-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
-                <div class="space-y-4 flight-schedule-container"></div>
+                <div class="accordion-body">
+                    <div class="space-y-4 flight-schedule-container"></div>
+                </div>
             </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
                 <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center"><h2 class="text-base font-semibold">포함/불포함</h2><span class="text-sm text-gray-500 ml-2 inclusion-exclusion-doc-name-display"></span></div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="accordion-toggle-btn" title="접기/펼치기" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;color:#6b7280;line-height:1;">▼</button>
+                        <div class="flex items-center"><h2 class="text-base font-semibold">포함/불포함</h2><span class="text-sm text-gray-500 ml-2 inclusion-exclusion-doc-name-display"></span></div>
+                    </div>
                     <button type="button" class="btn btn-sm btn-green load-inclusion-exclusion-db-btn"><i class="fas fa-database mr-1"></i> DB 불러오기</button>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">포함</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
-                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">불포함</h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="불포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
+                <div class="accordion-body">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">포함</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
+                        <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">불포함</h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="불포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
+                    </div>
                 </div>
             </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
-                <div id="itinerary-planner-container-${groupId}"></div>
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
+                <div class="accordion-body">
+                    <div id="itinerary-planner-container-${groupId}"></div>
+                </div>
             </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
-                <div id="hotel-maker-container-${groupId}"></div>
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50 accordion-section">
+                <div class="accordion-body">
+                    <div id="hotel-maker-container-${groupId}"></div>
+                </div>
             </section> 
         </div> 
     </div>`;
@@ -3361,6 +3392,14 @@ function setupEventListeners() {
             tr.remove();
             if (section.classList.contains('price-subgroup')) {
                 updateGrandTotal(section, groupId);
+            }
+        } else if (button.classList.contains('accordion-toggle-btn')) {
+            const section = button.closest('.accordion-section');
+            const body = section.querySelector('.accordion-body');
+            if (body) {
+                const isHidden = body.style.display === 'none';
+                body.style.display = isHidden ? '' : 'none';
+                button.textContent = isHidden ? '▼' : '▶';
             }
         } else if (button.classList.contains('day-toggle-button')) {
              ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
