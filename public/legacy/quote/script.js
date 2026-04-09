@@ -901,7 +901,7 @@ function initializeWorkspaceForSession(session) {
     workspace.innerHTML = `
         <header class="mb-8 flex justify-between items-center">
             <div class="flex items-baseline gap-4">
-                <h1 class="text-3xl font-bold text-indigo-700">2025 견적</h1>
+                <h1 class="text-3xl font-bold text-indigo-700">견적 계산기_2026 버전</h1>
                 <a href="./manual/index.html" target="_blank" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline">사용 매뉴얼</a>
             </div>
             <div class="flex items-center space-x-2 flex-wrap">
