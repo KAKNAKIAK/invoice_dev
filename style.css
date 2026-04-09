@@ -694,6 +694,58 @@ body {
     font-size: 12px;
 }
 
+.memo-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.memo-tabs-container {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.125rem;
+}
+
+.memo-tab {
+    border: 1px solid #d1d5db;
+    background-color: #f8fafc;
+    color: #374151;
+    border-radius: 0.375rem;
+    font-size: 11px;
+    padding: 0.2rem 0.45rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.memo-tab.active {
+    background-color: #e0e7ff;
+    border-color: #a5b4fc;
+    color: #3730a3;
+    font-weight: 600;
+}
+
+.memo-tab-title {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.memo-tab-close {
+    color: #9ca3af;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.memo-tab:hover .memo-tab-close {
+    color: #ef4444;
+}
+
 /* 포함/불포함 텍스트 영역 폰트 크기 */
 .inclusion-text,
 .exclusion-text {

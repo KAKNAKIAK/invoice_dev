@@ -27,6 +27,134 @@ const firebaseConfig = {
 };
 const fbApp = firebase.initializeApp(firebaseConfig, 'memoApp');
 const db = firebase.firestore(fbApp);
+const DEFAULT_MEMO_TEXT = '지원어려울시 업셀링 요청';
+
+function createMemoTabId() {
+    return `memo_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+}
+
+function ensureMemoTabsForSession(session, fallbackText = '') {
+    if (!session) return null;
+    if (!Array.isArray(session.memoTabs) || session.memoTabs.length === 0) {
+        const initialContent = (typeof session.memoText === 'string' && session.memoText.length > 0)
+            ? session.memoText
+            : (typeof fallbackText === 'string' ? fallbackText : '');
+        session.memoTabs = [{
+            id: createMemoTabId(),
+            title: '메모 1',
+            content: initialContent
+        }];
+    }
+
+    session.memoTabs = session.memoTabs.map((tab, index) => ({
+        id: tab?.id ? String(tab.id) : createMemoTabId(),
+        title: (typeof tab?.title === 'string' && tab.title.trim()) ? tab.title.trim() : `메모 ${index + 1}`,
+        content: typeof tab?.content === 'string' ? tab.content : ''
+    }));
+
+    if (!session.activeMemoTabId || !session.memoTabs.some(tab => tab.id === session.activeMemoTabId)) {
+        session.activeMemoTabId = session.memoTabs[0].id;
+    }
+    return session;
+}
+
+function syncActiveMemoTabContentFromTextarea() {
+    const session = getCurrentSession();
+    const memoTextarea = document.getElementById('memoText');
+    if (!session || !memoTextarea) return;
+
+    ensureMemoTabsForSession(session, memoTextarea.value || '');
+    const activeTab = session.memoTabs.find(tab => tab.id === session.activeMemoTabId);
+    if (activeTab) {
+        activeTab.content = memoTextarea.value;
+        session.memoText = memoTextarea.value;
+    }
+}
+
+function renderMemoTabs() {
+    const session = getCurrentSession();
+    const tabsContainer = document.getElementById('memoTabsContainer');
+    const memoTextarea = document.getElementById('memoText');
+    if (!session || !tabsContainer || !memoTextarea) return;
+
+    ensureMemoTabsForSession(session, memoTextarea.value || session.memoText || '');
+    tabsContainer.innerHTML = '';
+
+    session.memoTabs.forEach((tab, index) => {
+        const tabButton = document.createElement('button');
+        tabButton.type = 'button';
+        tabButton.className = `memo-tab${tab.id === session.activeMemoTabId ? ' active' : ''}`;
+        tabButton.dataset.memoTabId = tab.id;
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'memo-tab-title';
+        titleSpan.textContent = tab.title || `메모 ${index + 1}`;
+        tabButton.appendChild(titleSpan);
+
+        if (session.memoTabs.length > 1) {
+            const closeSpan = document.createElement('span');
+            closeSpan.className = 'memo-tab-close';
+            closeSpan.dataset.action = 'close';
+            closeSpan.textContent = '×';
+            tabButton.appendChild(closeSpan);
+        }
+        tabsContainer.appendChild(tabButton);
+    });
+
+    const activeTab = session.memoTabs.find(tab => tab.id === session.activeMemoTabId);
+    memoTextarea.value = activeTab ? (activeTab.content || '') : '';
+    session.memoText = memoTextarea.value;
+}
+
+function setActiveMemoTab(tabId) {
+    const session = getCurrentSession();
+    if (!session) return;
+    syncActiveMemoTabContentFromTextarea();
+    ensureMemoTabsForSession(session);
+    if (!session.memoTabs.some(tab => tab.id === tabId)) return;
+    session.activeMemoTabId = tabId;
+    renderMemoTabs();
+    updateCurrentSession();
+}
+
+function addMemoTab(initial = {}) {
+    const session = getCurrentSession();
+    if (!session) return;
+    syncActiveMemoTabContentFromTextarea();
+    ensureMemoTabsForSession(session);
+    const nextIndex = session.memoTabs.length + 1;
+    const newTab = {
+        id: createMemoTabId(),
+        title: (typeof initial.title === 'string' && initial.title.trim()) ? initial.title.trim() : `메모 ${nextIndex}`,
+        content: typeof initial.content === 'string' ? initial.content : ''
+    };
+    session.memoTabs.push(newTab);
+    session.activeMemoTabId = newTab.id;
+    renderMemoTabs();
+    updateCurrentSession();
+}
+
+function closeMemoTab(tabId) {
+    const session = getCurrentSession();
+    if (!session) return;
+    syncActiveMemoTabContentFromTextarea();
+    ensureMemoTabsForSession(session);
+    if (session.memoTabs.length <= 1) return;
+
+    const tabIndex = session.memoTabs.findIndex(tab => tab.id === tabId);
+    if (tabIndex < 0) return;
+
+    const wasActive = session.activeMemoTabId === tabId;
+    session.memoTabs.splice(tabIndex, 1);
+
+    if (wasActive) {
+        const nextActive = session.memoTabs[Math.max(0, tabIndex - 1)] || session.memoTabs[0];
+        session.activeMemoTabId = nextActive.id;
+    }
+
+    renderMemoTabs();
+    updateCurrentSession();
+}
 
 // =======================================================================
 // 2. 파일 탭 시스템 - FileSession 클래스와 파일 관리
@@ -40,6 +168,8 @@ class FileSession {
         this.groupCounter = 0;
         this.activeGroupId = null;
         this.memoText = '';
+        this.memoTabs = [];
+        this.activeMemoTabId = null;
         this.customerInfo = [];
         this.uiState = {
             scrollTop: 0,
@@ -75,6 +205,11 @@ class FileSession {
         // 메모 텍스트 저장
         const memoTextarea = document.getElementById('memoText');
         if (memoTextarea) {
+            ensureMemoTabsForSession(this, memoTextarea.value || '');
+            const activeTab = this.memoTabs.find(tab => tab.id === this.activeMemoTabId);
+            if (activeTab) {
+                activeTab.content = memoTextarea.value;
+            }
             this.memoText = memoTextarea.value;
         }
         
@@ -102,7 +237,8 @@ class FileSession {
         // 메모 텍스트 복원
         const memoTextarea = document.getElementById('memoText');
         if (memoTextarea) {
-            memoTextarea.value = this.memoText || '';
+            ensureMemoTabsForSession(this, this.memoText || '');
+            renderMemoTabs();
         }
         
         // 고객 정보 복원
@@ -403,6 +539,56 @@ function rebindWorkspaceEventListeners() {
             newLoadMemoFromDbBtn.addEventListener('click', openLoadMemoModal);
         }
     }
+
+    const addMemoTabBtn = document.getElementById('addMemoTabBtn');
+    if (addMemoTabBtn) {
+        addMemoTabBtn.replaceWith(addMemoTabBtn.cloneNode(true));
+        const newAddMemoTabBtn = document.getElementById('addMemoTabBtn');
+        if (newAddMemoTabBtn) {
+            newAddMemoTabBtn.addEventListener('click', () => {
+                addMemoTab({ content: '' });
+            });
+        }
+    }
+
+    const copyMemoBtn = document.getElementById('copyMemoBtn');
+    if (copyMemoBtn) {
+        copyMemoBtn.replaceWith(copyMemoBtn.cloneNode(true));
+        const newCopyMemoBtn = document.getElementById('copyMemoBtn');
+        if (newCopyMemoBtn) {
+            newCopyMemoBtn.addEventListener('click', () => {
+                const memoTextarea = document.getElementById('memoText');
+                copyToClipboard(memoTextarea ? memoTextarea.value : '', '메모');
+            });
+        }
+    }
+
+    const memoTextarea = document.getElementById('memoText');
+    if (memoTextarea) {
+        memoTextarea.oninput = () => {
+            syncActiveMemoTabContentFromTextarea();
+            updateCurrentSession();
+        };
+    }
+
+    const memoTabsContainer = document.getElementById('memoTabsContainer');
+    if (memoTabsContainer) {
+        memoTabsContainer.onclick = (event) => {
+            const closeButton = event.target.closest('.memo-tab-close');
+            const tabButton = event.target.closest('.memo-tab');
+            if (!tabButton) return;
+            const tabId = tabButton.dataset.memoTabId;
+            if (!tabId) return;
+
+            if (closeButton) {
+                closeMemoTab(tabId);
+                return;
+            }
+            setActiveMemoTab(tabId);
+        };
+    }
+
+    renderMemoTabs();
 
     // 견적 그룹 버튼들 이벤트 바인딩
     const newGroupBtn = document.getElementById('newGroupBtn');
@@ -938,8 +1124,12 @@ function initializeWorkspaceForSession(session) {
                     <section class="w-full sm:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg flex flex-col">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-base font-semibold text-gray-800">메모</h2>
-                            <button type="button" id="loadMemoFromDbBtn" class="btn btn-sm btn-outline"><i class="fas fa-database mr-1"></i> DB</button>
+                            <div class="memo-header-actions">
+                                <button type="button" id="loadMemoFromDbBtn" class="btn btn-sm btn-outline"><i class="fas fa-database mr-1"></i> DB</button>
+                                <button type="button" id="addMemoTabBtn" class="btn btn-sm btn-outline" title="새 메모 탭"><i class="fas fa-plus"></i></button>
+                            </div>
                         </div>
+                        <div id="memoTabsContainer" class="memo-tabs-container"></div>
                         <textarea id="memoText" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="메모 입력..."></textarea>
                         <button type="button" id="copyMemoBtn" class="mt-2 btn btn-sm btn-outline"><i class="far fa-copy"></i> 메모 복사</button>
                     </section>
@@ -2033,11 +2223,20 @@ async function getSaveDataBlob() {
     if (activeGroupId) {
         syncGroupUIToData(activeGroupId);
     }
+    syncActiveMemoTabContentFromTextarea();
+    const currentSession = getCurrentSession();
+    const memoTabsForSave = currentSession?.memoTabs ? JSON.parse(JSON.stringify(currentSession.memoTabs)) : [];
+    const activeMemoTabIdForSave = currentSession?.activeMemoTabId || (memoTabsForSave[0]?.id || null);
+    const memoTextForSave = (typeof currentSession?.memoText === 'string')
+        ? currentSession.memoText
+        : (document.getElementById('memoText')?.value || '');
     const allData = {
         quoteGroupsData,
         groupCounter,
         activeGroupId,
-        memoText: document.getElementById('memoText').value,
+        memoText: memoTextForSave,
+        memoTabs: memoTabsForSave,
+        activeMemoTabId: activeMemoTabIdForSave,
         customerInfo: getCustomerData()
     };
     const doc = document.cloneNode(true);
@@ -2171,7 +2370,10 @@ async function loadFileInCurrentTab(fileHandle) {
                     currentSession.groupCounter = restoredData.groupCounter || 0;
                     currentSession.activeGroupId = restoredData.activeGroupId;
                     currentSession.memoText = restoredData.memoText || '';
+                    currentSession.memoTabs = Array.isArray(restoredData.memoTabs) ? JSON.parse(JSON.stringify(restoredData.memoTabs)) : [];
+                    currentSession.activeMemoTabId = restoredData.activeMemoTabId || null;
                     currentSession.customerInfo = restoredData.customerInfo || [];
+                    ensureMemoTabsForSession(currentSession, currentSession.memoText || '');
                     
                     // 전역 변수도 업데이트 (호환성을 위해)
                     quoteGroupsData = currentSession.quoteGroupsData;
@@ -2230,7 +2432,10 @@ async function loadFileInNewTab(fileHandle) {
                 session.groupCounter = restoredData.groupCounter || 0;
                 session.activeGroupId = restoredData.activeGroupId;
                 session.memoText = restoredData.memoText || '';
+                session.memoTabs = Array.isArray(restoredData.memoTabs) ? JSON.parse(JSON.stringify(restoredData.memoTabs)) : [];
+                session.activeMemoTabId = restoredData.activeMemoTabId || null;
                 session.customerInfo = restoredData.customerInfo || [];
+                ensureMemoTabsForSession(session, session.memoText || '');
                 
                 // 전역 변수도 업데이트 (호환성을 위해)
                 quoteGroupsData = session.quoteGroupsData;
@@ -2442,10 +2647,23 @@ async function loadAllSnippets() {
         return dataSets;
     } catch (error) { console.error("자주 쓰는 문자 목록 불러오기 오류:", error); showToastMessage("자주 쓰는 문자 목록을 불러오는 중 오류가 발생했습니다.", true); return []; }
 }
-function applyMemoData(snippet) {
+function applyMemoData(snippet, options = {}) {
+    const { openInNewTab = true } = options;
+    if (openInNewTab) {
+        addMemoTab({
+            title: snippet.name || '',
+            content: snippet.content || ''
+        });
+        showToastMessage(`'${snippet.name}' 메모가 새 탭으로 열렸습니다.`);
+        return;
+    }
+
     const memoTextarea = document.getElementById('memoText');
     if (!memoTextarea) return;
     memoTextarea.value = snippet.content || '';
+    syncActiveMemoTabContentFromTextarea();
+    renderMemoTabs();
+    updateCurrentSession();
     showToastMessage(`'${snippet.name}' 내용을 메모에 적용했습니다.`);
 }
 async function openLoadMemoModal() {
@@ -2460,8 +2678,7 @@ async function openLoadMemoModal() {
     const allSnippets = await loadAllSnippets();
     loadingMsg.style.display = 'none';
     const clickHandler = (item) => {
-        applyMemoData(item);
-        modal.classList.add('hidden');
+        applyMemoData(item, { openInNewTab: true });
     };
     renderFilteredList({ fullList: allSnippets, searchTerm: '', listElementId: 'memoList', clickHandler, itemTitleField: 'name' });
     searchInput.oninput = () => {
@@ -3187,7 +3404,17 @@ function restoreState(data) {
     });
 
     groupCounter = data.groupCounter || 0;
-    document.getElementById('memoText').value = data.memoText || '';
+    const currentSession = getCurrentSession();
+    if (currentSession) {
+        currentSession.memoText = data.memoText || '';
+        currentSession.memoTabs = Array.isArray(data.memoTabs) ? JSON.parse(JSON.stringify(data.memoTabs)) : [];
+        currentSession.activeMemoTabId = data.activeMemoTabId || null;
+        ensureMemoTabsForSession(currentSession, currentSession.memoText || '');
+    } else {
+        const memoTextarea = document.getElementById('memoText');
+        if (memoTextarea) memoTextarea.value = data.memoText || '';
+    }
+    renderMemoTabs();
     
     if (data.customerInfo && data.customerInfo.length > 0) { data.customerInfo.forEach(customer => createCustomerCard(customer)); }
     else { createCustomerCard(); }
@@ -3213,7 +3440,21 @@ function initializeNewSession() {
     }
     
     // 기존 초기화 로직
-    document.getElementById('memoText').value = '지원어려울시 업셀링 요청';
+    const currentSession = getCurrentSession();
+    if (currentSession) {
+        currentSession.memoText = DEFAULT_MEMO_TEXT;
+        currentSession.memoTabs = [{
+            id: createMemoTabId(),
+            title: '메모 1',
+            content: DEFAULT_MEMO_TEXT
+        }];
+        currentSession.activeMemoTabId = currentSession.memoTabs[0].id;
+        ensureMemoTabsForSession(currentSession, DEFAULT_MEMO_TEXT);
+    } else {
+        const memoTextarea = document.getElementById('memoText');
+        if (memoTextarea) memoTextarea.value = DEFAULT_MEMO_TEXT;
+    }
+    renderMemoTabs();
     
     // 현재 세션 업데이트
     updateCurrentSession();

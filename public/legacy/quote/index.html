@@ -60,8 +60,12 @@
                     <section class="w-full sm:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg flex flex-col">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-base font-semibold text-gray-800">메모</h2>
-                            <button type="button" id="loadMemoFromDbBtn" class="btn btn-sm btn-outline"><i class="fas fa-database mr-1"></i> DB</button>
+                            <div class="memo-header-actions">
+                                <button type="button" id="loadMemoFromDbBtn" class="btn btn-sm btn-outline"><i class="fas fa-database mr-1"></i> DB</button>
+                                <button type="button" id="addMemoTabBtn" class="btn btn-sm btn-outline" title="새 메모 탭"><i class="fas fa-plus"></i></button>
+                            </div>
                         </div>
+                        <div id="memoTabsContainer" class="memo-tabs-container"></div>
                         <textarea id="memoText" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="메모 입력..."></textarea>
                          <button type="button" id="copyMemoBtn" class="mt-2 btn btn-sm btn-outline"><i class="far fa-copy"></i> 메모 복사</button>
                     </section>
