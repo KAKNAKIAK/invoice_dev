@@ -1421,10 +1421,10 @@ function ip_parseAndValidateDateInput(inputValue) { let dateStr = inputValue.tri
 
 function initializeItineraryPlannerForGroup(container, groupId) {
     container.innerHTML = `
-        <header class="ip-header sticky top-0 z-10 py-3 px-4 -mx-4 mb-4 bg-white/80 backdrop-blur-sm">
-            <div class="flex justify-between items-center h-[50px]">
-                <div id="ip-headerTitleSection-${groupId}" class="ip-header-title-container"></div>
-                <div class="flex items-center space-x-2">
+        <header class="ip-header sticky top-0 z-10 py-2 px-4 -mx-4 mb-4 bg-white/80 backdrop-blur-sm">
+            <div class="flex items-center gap-3" style="flex-wrap:nowrap;">
+                <div id="ip-headerTitleSection-${groupId}" class="ip-header-title-container" style="flex-shrink:0;"></div>
+                <div class="flex items-center gap-2" style="margin-left:auto;flex-shrink:0;">
                     <button id="ip-copyInlineHtmlButton-${groupId}" class="btn btn-sm btn-outline" title="일정표 코드 복사"><i class="fas fa-copy"></i> 코드 복사</button>
                     <button id="ip-inlinePreviewButton-${groupId}" class="btn btn-sm btn-outline" title="인라인 형식 미리보기"><i class="fas fa-eye"></i> 미리보기</button>
                     <button id="ip-loadFromDBBtn-${groupId}" class="btn btn-sm btn-green" title="DB에서 일정 불러오기"><i class="fas fa-database"></i><span class="inline ml-2">DB 불러오기</span></button>
