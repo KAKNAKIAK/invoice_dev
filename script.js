@@ -1,4 +1,4 @@
-
+﻿
 // =======================================================================
 // 1. 전역 변수 및 설정
 // =======================================================================
@@ -1518,7 +1518,7 @@ function ip_renderDays(groupId, container) {
     });
     if (typeof Sortable !== 'undefined') {
         new Sortable(daysContainer, { handle: '.day-header-container', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const itineraryData = quoteGroupsData[groupId].itineraryData; const movedDay = itineraryData.days.splice(evt.oldIndex, 1)[0]; itineraryData.days.splice(evt.newIndex, 0, movedDay); ip_recalculateAllDates(groupId); ip_render(groupId); } });
-        daysContainer.querySelectorAll('.activities-list').forEach(list => { new Sortable(list, { group: `shared-activities-${groupId}`, handle: '.ip-activity-card', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const fromDayIndex = parseInt(evt.from.dataset.dayIndex); const toDayIndex = parseInt(evt.to.dataset.dayIndex); const itineraryData = quoteGroupsData[groupId].itineraryData; const movedActivity = itineraryData.days[fromDayIndex].activities.splice(evt.oldIndex, 1)[0]; itineraryData.days[toDayIndex].activities.splice(evt.newIndex, 0, movedActivity); ip_render(groupId); } }); });
+        daysContainer.querySelectorAll('.activities-list').forEach(list => { new Sortable(list, { group: `shared-activities-${groupId}`, handle: '.ip-activity-drag-handle', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const fromDayIndex = parseInt(evt.from.dataset.dayIndex); const toDayIndex = parseInt(evt.to.dataset.dayIndex); const itineraryData = quoteGroupsData[groupId].itineraryData; const movedActivity = itineraryData.days[fromDayIndex].activities.splice(evt.oldIndex, 1)[0]; itineraryData.days[toDayIndex].activities.splice(evt.newIndex, 0, movedActivity); ip_render(groupId); } }); });
     }
 }
 function ip_renderActivities(activitiesListElement, activities, dayIndex, groupId) {
@@ -1526,14 +1526,22 @@ function ip_renderActivities(activitiesListElement, activities, dayIndex, groupI
     (activities || []).forEach((activity, activityIndex) => {
         const card = document.createElement('div'); card.className = 'ip-activity-card activity-card';
         card.dataset.activityId = activity.id; card.dataset.dayIndex = dayIndex; card.dataset.activityIndex = activityIndex;
-        let imageHTML = activity.imageUrl ? `<img src="${activity.imageUrl}" alt="${activity.title}" class="ip-card-image card-image" onerror="this.style.display='none';">` : '';
+        const summaryLabel = (activity.title || '').trim() || (activity.locationLink || '').trim() || '활동';
+        const imageHTML = activity.imageUrl ? `<img src="${activity.imageUrl}" alt="${activity.title}" class="ip-card-image card-image" onerror="this.style.display='none';">` : '';
         const descHTML = activity.description ? `<div class="card-description">${activity.description.replace(/\n/g, '<br>')}</div>` : '';
-        let locationText = activity.locationLink;
-        if (locationText && locationText.length > 35) { locationText = locationText.substring(0, 32) + '...'; }
-        const locHTML = activity.locationLink ? `<div class="card-location">📍 <a href="${activity.locationLink}" target="_blank" title="${activity.locationLink}">${locationText}</a></div>` : '';
+        const locHTML = activity.locationLink ? `<div class="card-location">장소: ${activity.locationLink}</div>` : '';
         const costHTML = activity.cost ? `<div class="card-cost">💰 ${activity.cost}</div>` : '';
         const notesHTML = activity.notes ? `<div class="card-notes">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
-        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
+        const detailBodyHTML = `${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}`;
+        card.innerHTML = `<div class="ip-activity-shell"><details class="ip-activity-details"${activity.isExpanded ? ' open' : ''}><summary class="ip-activity-summary"><span class="ip-activity-drag-handle" title="드래그로 순서 이동">⋮⋮</span><span class="card-icon">${activity.icon || '&nbsp;'}</span><span class="card-time" data-time-value="${activity.time || ''}">${ip_formatTimeToHHMM(activity.time)}</span><span class="ip-activity-summary-label">${summaryLabel}</span><span class="ip-activity-summary-hint">터치/클릭</span><span class="ip-activity-summary-chevron"></span></summary><div class="ip-activity-details-body">${detailBodyHTML || '<div class="card-empty-hint">상세 정보 없음</div>'}</div></details><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div></div>`;
+
+        const detailsElement = card.querySelector('.ip-activity-details');
+        if (detailsElement) {
+            detailsElement.addEventListener('toggle', () => {
+                const targetActivity = quoteGroupsData[groupId]?.itineraryData?.days?.[dayIndex]?.activities?.[activityIndex];
+                if (targetActivity) targetActivity.isExpanded = detailsElement.open;
+            });
+        }
         
         // 삭제 버튼만 직접 이벤트 바인딩 (강화된 버전)
         const deleteBtn = card.querySelector('.delete-activity-button');

@@ -265,18 +265,140 @@ body {
 .icon-button:hover { color: #4f46e5; }
 .icon-button svg { width: 1rem; height: 1rem; }
 
-.day-header-container { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #f9fafb; border-radius: 0.25rem;}
-.day-header-main { display: flex; align-items: center; }
+.day-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0.6rem;
+    background-color: #eef2ff;
+    border: 1px solid #dbe5ff;
+    border-radius: 0.5rem;
+}
+.day-header-main { display: flex; align-items: center; gap: 0.375rem; }
 .day-header-title { font-weight: 600; }
+.ip-day-header-container {
+    cursor: grab;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.ip-day-header-container:hover {
+    background-color: #e8eeff;
+    border-color: #c7d8ff;
+}
+.ip-day-header-container:active { cursor: grabbing; }
 
-.activity-card { display: flex; gap: 0.75rem; padding: 0.75rem; border-radius: 0.25rem; background-color: white; border: 1px solid #e5e7eb; /* Add a subtle border */}
-.activity-card:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
-.card-time-icon-area { flex-shrink: 0; width: 50px; text-align: center;}
-.card-details-area { flex-grow: 1; }
-.card-title { font-weight: 600; margin-bottom: 0.25rem; }
-.card-description, .card-location, .card-cost, .card-notes { font-size: 0.875rem; color: #4b5563; }
-.card-actions-direct { display: flex; flex-direction: column; }
+.ip-activity-card.activity-card {
+    margin-top: 0.5rem;
+    padding: 0;
+    border-radius: 0.5rem;
+    border: 1px solid #d8e0ef;
+    background-color: #fbfcff;
+}
+.ip-activity-card.activity-card:hover {
+    border-color: #c7d8ff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+}
+.ip-activity-shell {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.ip-activity-details { flex: 1; }
+.ip-activity-details > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.7rem;
+    cursor: pointer;
+    user-select: none;
+}
+.ip-activity-details > summary::-webkit-details-marker { display: none; }
+.ip-activity-drag-handle {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    letter-spacing: -1px;
+    cursor: grab;
+    touch-action: none;
+}
+.ip-activity-drag-handle:active { cursor: grabbing; }
+.ip-activity-summary .card-icon {
+    min-width: 1rem;
+    font-size: 1rem;
+    text-align: center;
+}
+.ip-activity-summary .card-time {
+    min-width: 44px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #111827;
+}
+.ip-activity-summary-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+.ip-activity-summary-hint {
+    font-size: 0.72rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+.ip-activity-summary-chevron {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid #64748b;
+    border-bottom: 2px solid #64748b;
+    transform: rotate(45deg);
+    margin-top: -2px;
+    transition: transform 0.2s ease, margin-top 0.2s ease;
+}
+.ip-activity-details[open] .ip-activity-summary-chevron {
+    transform: rotate(225deg);
+    margin-top: 2px;
+}
+.ip-activity-details-body {
+    border-top: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    border-radius: 0 0 0.5rem 0.5rem;
+    padding: 0.1rem 0.7rem 0.7rem;
+}
+.card-description,
+.card-location,
+.card-cost,
+.card-notes {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    color: #4b5563;
+    line-height: 1.45;
+}
+.card-location { word-break: break-all; }
+.card-image {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    margin-top: 0.45rem;
+}
+.card-empty-hint {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    padding-top: 0.35rem;
+}
+.card-actions-direct {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.45rem 0.45rem 0 0;
+}
+@media (max-width: 768px) {
+    .ip-activity-summary-hint { display: none; }
+    .ip-activity-summary .card-time { min-width: 36px; }
+}
 
 /* Hotel Maker Styles */
 .hm-tabs-container .hotel-tab-button {
