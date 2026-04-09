@@ -934,13 +934,19 @@ function initializeWorkspaceForSession(session) {
                     </section>
                     <section class="w-full sm:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg">
                         <h2 class="text-base font-semibold text-gray-800 mb-4">업무 보조 툴</h2>
-                        <div class="grid grid-cols-1 gap-2 mt-4">
-                            <a href="https://kaknakiak.github.io/ERPTOGDS/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">GDS 엔트리 생성기</a>
-                            <a href="https://kaknakiak.github.io/PNRTOERP/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">PNR 네임필드추출</a>
-                            <a href="https://incomparable-meringue-d33b6b.netlify.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">간편 URL 단축기</a>
-                            <a href="https://kaknakiak.github.io/hotelbooking/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">호텔 수배서 작성기</a>
-                            <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">호텔카드 메이커</a>
-                            <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">상세일정표</a>
+                        <div class="mt-4">
+                            <div class="rounded-md border border-gray-200 overflow-hidden bg-white">
+                                <iframe
+                                    src="https://incomparable-meringue-d33b6b.netlify.app/"
+                                    title="간편 URL 단축기"
+                                    class="w-full"
+                                    style="height: 230px; border: 0;"
+                                    loading="lazy"
+                                    allow="clipboard-write"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                ></iframe>
+                            </div>
+                            <a href="https://incomparable-meringue-d33b6b.netlify.app/" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-sm text-indigo-600 hover:underline">새 창에서 열기</a>
                         </div>
                     </section>
                 </div>
