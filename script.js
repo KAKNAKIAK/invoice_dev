@@ -419,7 +419,7 @@ function rebindWorkspaceEventListeners() {
                     flightSchedule: [],
                     priceInfo: [],
                     hotelMakerData: { allHotelData: [{ nameKo: '새 호텔 1', nameEn: "", website: "", image: "", description: "" }], currentHotelIndex: 0 },
-                    itineraryData: { title: "새 일정표", days: [], editingTitle: false },
+                    itineraryData: { title: "", days: [], editingTitle: false },
                     inclusionText: '',
                     exclusionText: ''
                 };
@@ -1462,7 +1462,7 @@ function ip_renderHeaderTitle(groupId, container) {
         headerTitleSection.append(input, saveButton, cancelButton);
         requestAnimationFrame(() => { input.focus(); input.select(); });
     } else {
-        const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title;
+        const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title || ' ';
         titleH1.style.cursor = 'pointer';
         titleH1.title = '클릭하여 제목 수정';
         titleH1.addEventListener('click', () => ip_handleEditTripTitle(groupId));
@@ -2414,7 +2414,7 @@ function addNewGroup() {
             currentHotelDocumentName: "새 호텔 정보 모음"
         },
         itineraryData: {
-            title: "새 여행 일정표",
+            title: "",
             editingTitle: false,
             days: [
                 { date: dateToYyyyMmDd(new Date()), activities: [], isCollapsed: false, editingDate: false }
@@ -2553,17 +2553,17 @@ function initializeGroup(groupEl, groupId) {
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">호텔카드 메이커</h2>
-                    <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
-                </div>
-                <div id="hotel-maker-container-${groupId}"></div>
-            </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
-                <div class="flex justify-between items-center mb-4">
                     <h2 class="text-base font-semibold">새 여행 일정표</h2>
                     <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
                 </div>
                 <div id="itinerary-planner-container-${groupId}"></div>
+            </section> 
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-base font-semibold">호텔카드 메이커</h2>
+                    <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
+                </div>
+                <div id="hotel-maker-container-${groupId}"></div>
             </section> 
         </div> 
     </div>`;
@@ -3070,7 +3070,7 @@ function restoreState(data) {
         }
         if (!group.itineraryData) {
              group.itineraryData = {
-                title: "새 여행 일정표",
+                title: "",
                 editingTitle: false,
                 days: [{ date: dateToYyyyMmDd(new Date()), activities: [], isCollapsed: false, editingDate: false }]
             };
