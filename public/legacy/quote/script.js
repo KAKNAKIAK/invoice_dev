@@ -620,7 +620,13 @@ function rebindWorkspaceEventListeners() {
                 } else if (button.classList.contains('day-toggle-button')) {
                      ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                 }
-                else if(button.id.startsWith('ip-')) {
+                else if (
+                    button.id.startsWith('ip-') ||
+                    button.classList.contains('add-activity-button') ||
+                    button.classList.contains('edit-activity-button') ||
+                    button.classList.contains('duplicate-activity-button') ||
+                    button.classList.contains('delete-activity-button')
+                ) {
                     if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
                     else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
                     else if (button.id.includes('inlinePreviewButton')) ip_handleInlinePreview(groupId);
@@ -629,7 +635,7 @@ function rebindWorkspaceEventListeners() {
                     else if (button.classList.contains('save-date-button')) ip_handleSaveDate(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId, button.previousElementSibling.value);
                     else if (button.classList.contains('cancel-date-edit-button')) ip_handleCancelDateEdit(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                     else if (button.classList.contains('delete-day-button')) ip_showConfirmDeleteDayModal(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
-                    else if (button.classList.contains('add-activity-button')) ip_openActivityModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
+                    else if (button.classList.contains('add-activity-button')) ip_openAddActivityChoiceModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
                     else if (button.classList.contains('edit-activity-button')) {
                         console.log('편집 버튼 클릭됨 - 현재 비활성화됨');
                         // 편집 기능 비활성화
@@ -773,7 +779,10 @@ function rebindWorkspaceEventListeners() {
                     }
                 }
             });
-            
+
+            // Rebind 과정에서 cloneNode(true)로 Sortable 바인딩이 사라질 수 있어
+            // 렌더 완료 후 일정표 drag/drop을 다시 초기화한다.
+            reinitializeItineraryDragAndDrop(newContentsContainer);
             console.log('quoteGroupContentsContainer 이벤트 리스너 재바인딩 완료');
         } else {
             console.error('newContentsContainer를 찾을 수 없습니다');
@@ -1391,6 +1400,11 @@ const ip_saveIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 2
 const ip_cancelIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
 const ip_deleteIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
 const ip_duplicateIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+const ip_syncFromDbIconSVG = `<svg fill="none" class="w-4 h-4" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>`;
+let ipPendingNewActivityGroupId = null;
+let ipPendingNewActivityDayIndex = null;
+let ipPendingSyncActivityIndex = null;
+let ipAllFetchedAttractions = [];
 
 function ip_generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
 function dateToYyyyMmDd(date) {
@@ -1443,6 +1457,17 @@ function ip_render(groupId) {
     ip_renderDays(groupId, container);
     console.log(`일정 렌더링 완료: ${groupId}`);
 }
+function ip_getSortableIndex(evt, primaryKey, fallbackKey) {
+    const primaryValue = evt[primaryKey];
+    if (Number.isInteger(primaryValue)) return primaryValue;
+    const fallbackValue = evt[fallbackKey];
+    return Number.isInteger(fallbackValue) ? fallbackValue : null;
+}
+function ip_getDayIndexFromList(element) {
+    if (!element || !element.dataset) return null;
+    const dayIndex = parseInt(element.dataset.dayIndex, 10);
+    return Number.isInteger(dayIndex) ? dayIndex : null;
+}
 function ip_renderHeaderTitle(groupId, container) {
     const itineraryData = quoteGroupsData[groupId].itineraryData;
     const headerTitleSection = container.querySelector(`#ip-headerTitleSection-${groupId}`);
@@ -1477,9 +1502,70 @@ function ip_renderDays(groupId, container) {
         ip_renderActivities(activitiesList, day.activities, dayIndex, groupId);
     });
     if (typeof Sortable !== 'undefined') {
-        new Sortable(daysContainer, { handle: '.day-header-container', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const itineraryData = quoteGroupsData[groupId].itineraryData; const movedDay = itineraryData.days.splice(evt.oldIndex, 1)[0]; itineraryData.days.splice(evt.newIndex, 0, movedDay); ip_recalculateAllDates(groupId); ip_render(groupId); } });
-        daysContainer.querySelectorAll('.activities-list').forEach(list => { new Sortable(list, { group: `shared-activities-${groupId}`, handle: '.ip-activity-card', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const fromDayIndex = parseInt(evt.from.dataset.dayIndex); const toDayIndex = parseInt(evt.to.dataset.dayIndex); const itineraryData = quoteGroupsData[groupId].itineraryData; const movedActivity = itineraryData.days[fromDayIndex].activities.splice(evt.oldIndex, 1)[0]; itineraryData.days[toDayIndex].activities.splice(evt.newIndex, 0, movedActivity); ip_render(groupId); } }); });
+        new Sortable(daysContainer, {
+            handle: '.ip-day-header-container',
+            draggable: '.ip-day-section',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            filter: 'a,button,input,textarea,select',
+            preventOnFilter: false,
+            onStart: () => {
+                console.log('[itinerary] day drag started', groupId);
+            },
+            onEnd: (evt) => {
+                const oldIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
+                const newIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
+                if (oldIndex === null || newIndex === null || oldIndex === newIndex) return;
+                const itineraryData = quoteGroupsData[groupId].itineraryData;
+                const movedDay = itineraryData.days.splice(oldIndex, 1)[0];
+                if (!movedDay) return;
+                itineraryData.days.splice(newIndex, 0, movedDay);
+                ip_recalculateAllDates(groupId);
+                ip_render(groupId);
+            }
+        });
+        daysContainer.querySelectorAll('.activities-list').forEach(list => {
+            new Sortable(list, {
+                group: `shared-activities-${groupId}`,
+                handle: '.ip-activity-card',
+                draggable: '.ip-activity-card',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                filter: 'a,button,input,textarea,select',
+                preventOnFilter: false,
+                onStart: () => {
+                    console.log('[itinerary] activity drag started', groupId);
+                },
+                onEnd: (evt) => {
+                    const fromDayIndex = ip_getDayIndexFromList(evt.from);
+                    const toDayIndex = ip_getDayIndexFromList(evt.to);
+                    const oldActivityIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
+                    const newActivityIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
+                    if (fromDayIndex === null || toDayIndex === null || oldActivityIndex === null || newActivityIndex === null) return;
+                    const itineraryData = quoteGroupsData[groupId].itineraryData;
+                    if (!itineraryData.days[fromDayIndex] || !itineraryData.days[toDayIndex]) return;
+                    const movedActivity = itineraryData.days[fromDayIndex].activities.splice(oldActivityIndex, 1)[0];
+                    if (!movedActivity) return;
+                    itineraryData.days[toDayIndex].activities.splice(newActivityIndex, 0, movedActivity);
+                    ip_render(groupId);
+                }
+            });
+        });
+    } else {
+        console.error('[itinerary] Sortable is undefined - drag-and-drop disabled');
     }
+}
+
+function reinitializeItineraryDragAndDrop(rootElement) {
+    if (!rootElement) return;
+    const itineraryContainers = rootElement.querySelectorAll('[id^="itinerary-planner-container-"]');
+    itineraryContainers.forEach((container) => {
+        const groupId = container.id.replace('itinerary-planner-container-', '');
+        if (quoteGroupsData[groupId] && quoteGroupsData[groupId].itineraryData) {
+            ip_render(groupId);
+            console.log('[itinerary] drag and drop reinitialized:', groupId);
+        }
+    });
 }
 function ip_renderActivities(activitiesListElement, activities, dayIndex, groupId) {
     activitiesListElement.innerHTML = '';
@@ -1493,11 +1579,38 @@ function ip_renderActivities(activitiesListElement, activities, dayIndex, groupI
         const locHTML = activity.locationLink ? `<div class="card-location">📍 <a href="${activity.locationLink}" target="_blank" title="${activity.locationLink}">${locationText}</a></div>` : '';
         const costHTML = activity.cost ? `<div class="card-cost">💰 ${activity.cost}</div>` : '';
         const notesHTML = activity.notes ? `<div class="card-notes">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
-        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
+        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button card-action-icon-button sync-activity-from-db-button" title="관광지 DB 최신 정보로 덮어쓰기">${ip_syncFromDbIconSVG}</button><button class="icon-button card-action-icon-button edit-activity-button" title="수정">${ip_editIconSVG}</button><button class="icon-button card-action-icon-button duplicate-activity-button" title="복제">${ip_duplicateIconSVG}</button><button class="icon-button card-action-icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
         
-        // 삭제 버튼만 직접 이벤트 바인딩 (강화된 버전)
+        // 카드 액션 버튼 이벤트를 카드 렌더 시점에 직접 바인딩
         const deleteBtn = card.querySelector('.delete-activity-button');
-        
+        const syncBtn = card.querySelector('.sync-activity-from-db-button');
+        const editBtn = card.querySelector('.edit-activity-button');
+        const duplicateBtn = card.querySelector('.duplicate-activity-button');
+
+        if (syncBtn) {
+            syncBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ip_openSyncActivityFromDbModal(groupId, dayIndex, activityIndex);
+            });
+        }
+
+        if (editBtn) {
+            editBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ip_openActivityModal(groupId, dayIndex, activityIndex);
+            });
+        }
+
+        if (duplicateBtn) {
+            duplicateBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ip_handleDuplicateActivity(groupId, dayIndex, activityIndex);
+            });
+        }
+
         if (deleteBtn) {
             // 여러 방법으로 이벤트 바인딩
             deleteBtn.onclick = function(e) {
@@ -1571,6 +1684,164 @@ function ip_handleActivityDoubleClick(event, groupId) {
     if (card) { ip_openActivityModal(groupId, parseInt(card.dataset.dayIndex), parseInt(card.dataset.activityIndex)); }
 }
 
+function ip_resetPendingAddActivityState() {
+    ipPendingNewActivityGroupId = null;
+    ipPendingNewActivityDayIndex = null;
+    ipPendingSyncActivityIndex = null;
+}
+
+function ip_openAddActivityChoiceModal(groupId, dayIndex) {
+    ipPendingNewActivityGroupId = groupId;
+    ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
+    ipPendingSyncActivityIndex = null;
+    const modal = document.getElementById('ipAddActivityChoiceModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function ip_closeAddActivityChoiceModal() {
+    const modal = document.getElementById('ipAddActivityChoiceModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function ip_openBlankActivityModal(groupId, dayIndex) {
+    ip_openActivityModal(groupId, dayIndex, -1);
+}
+
+function ip_openSyncActivityFromDbModal(groupId, dayIndex, activityIndex) {
+    ipPendingNewActivityGroupId = groupId;
+    ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
+    ipPendingSyncActivityIndex = parseInt(activityIndex, 10);
+    ip_loadAttractionListFromFirestore();
+}
+
+function ip_closeLoadAttractionModal() {
+    const modal = document.getElementById('ipLoadAttractionModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function ip_addActivityFromAttraction(attraction) {
+    const groupId = ipPendingNewActivityGroupId;
+    const dayIndex = ipPendingNewActivityDayIndex;
+    if (!groupId || !Number.isInteger(dayIndex)) {
+        showToastMessage('일정을 추가할 대상 날짜를 찾을 수 없습니다.', true);
+        return;
+    }
+    const day = quoteGroupsData[groupId]?.itineraryData?.days?.[dayIndex];
+    if (!day) {
+        showToastMessage('선택한 날짜 정보를 찾을 수 없습니다.', true);
+        ip_resetPendingAddActivityState();
+        return;
+    }
+
+    if (Number.isInteger(ipPendingSyncActivityIndex)) {
+        const targetActivity = day.activities[ipPendingSyncActivityIndex];
+        if (!targetActivity) {
+            showToastMessage('동기화할 기존 일정을 찾지 못했습니다.', true);
+            ip_resetPendingAddActivityState();
+            return;
+        }
+
+        targetActivity.icon = attraction.icon || '';
+        targetActivity.title = attraction.title || '';
+        targetActivity.description = attraction.description || '';
+        targetActivity.locationLink = attraction.locationLink || attraction.location || '';
+        targetActivity.imageUrl = attraction.imageUrl || '';
+        targetActivity.cost = attraction.cost || '';
+        targetActivity.notes = attraction.notes || '';
+
+        ip_render(groupId);
+        ip_closeLoadAttractionModal();
+        showToastMessage(`DAY ${dayIndex + 1} 일정을 "${attraction.title || '관광지 정보'}"로 동기화했습니다.`);
+        ip_resetPendingAddActivityState();
+        return;
+    }
+
+    day.activities.push({
+        id: ip_generateId(),
+        time: '',
+        icon: attraction.icon || '',
+        title: attraction.title || '',
+        description: attraction.description || '',
+        locationLink: attraction.locationLink || attraction.location || '',
+        imageUrl: attraction.imageUrl || '',
+        cost: attraction.cost || '',
+        notes: attraction.notes || ''
+    });
+
+    ip_render(groupId);
+    showToastMessage(`"${attraction.title || '새 일정'}" 항목을 DAY ${dayIndex + 1}에 추가했습니다.`);
+}
+
+function ip_renderFilteredAttractionList() {
+    const listEl = document.getElementById('ipAttractionList');
+    const searchInput = document.getElementById('ipAttractionSearchInput');
+    const loadingMsg = document.getElementById('ipLoadingAttractionMsg');
+    if (!listEl || !searchInput) return;
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    listEl.innerHTML = '';
+
+    const filteredAttractions = ipAllFetchedAttractions.filter((attraction) =>
+        (attraction.title || '').toLowerCase().includes(searchTerm)
+    );
+
+    if (filteredAttractions.length === 0) {
+        const isLoading = loadingMsg && loadingMsg.style.display !== 'none';
+        if (!isLoading) {
+            if (searchTerm) {
+                listEl.innerHTML = `<li class="p-2 text-gray-500">"${searchTerm}" 검색 결과가 없습니다.</li>`;
+            } else {
+                listEl.innerHTML = '<li class="p-2 text-gray-500">등록된 관광지 데이터가 없습니다.</li>';
+            }
+        }
+        return;
+    }
+
+    filteredAttractions.forEach((attraction) => {
+        const li = document.createElement('li');
+        li.className = 'p-3 hover:bg-gray-100 cursor-pointer';
+        li.innerHTML = `
+            <div class="font-medium flex items-center gap-2">
+                <span>${attraction.icon || ''}</span>
+                <span>${attraction.title || '(제목 없음)'}</span>
+            </div>
+            ${attraction.description ? `<div class="text-xs text-gray-500 mt-1">${attraction.description}</div>` : ''}
+        `;
+        li.addEventListener('click', () => ip_addActivityFromAttraction(attraction));
+        listEl.appendChild(li);
+    });
+}
+
+async function ip_loadAttractionListFromFirestore() {
+    const modal = document.getElementById('ipLoadAttractionModal');
+    const listEl = document.getElementById('ipAttractionList');
+    const loadingMsg = document.getElementById('ipLoadingAttractionMsg');
+    const searchInput = document.getElementById('ipAttractionSearchInput');
+    if (!modal || !listEl || !loadingMsg || !searchInput) {
+        showToastMessage('관광지 DB 불러오기 UI를 찾을 수 없습니다.', true);
+        return;
+    }
+
+    modal.classList.remove('hidden');
+    loadingMsg.style.display = 'block';
+    listEl.innerHTML = '';
+    searchInput.value = '';
+    ipAllFetchedAttractions = [];
+
+    try {
+        const querySnapshot = await ipDb.collection('attractions').orderBy('title').get();
+        querySnapshot.forEach((doc) => {
+            ipAllFetchedAttractions.push({ id: doc.id, ...doc.data() });
+        });
+    } catch (error) {
+        console.error('[itinerary] 관광지 목록 로드 실패:', error);
+        showToastMessage('관광지 DB 목록 불러오기 중 오류가 발생했습니다.', true);
+    } finally {
+        loadingMsg.style.display = 'none';
+        ip_renderFilteredAttractionList();
+    }
+}
+
 function ip_openActivityModal(groupId, dayIndex, activityIndex = -1) {
     const modal = document.getElementById('ipActivityModal'); const form = document.getElementById('ipActivityForm');
     modal.querySelector('#ipModalTitle').textContent = activityIndex > -1 ? '일정 수정' : '새 일정 추가';
@@ -1580,7 +1851,24 @@ function ip_openActivityModal(groupId, dayIndex, activityIndex = -1) {
     activityIconSelect.innerHTML = ip_travelEmojis.map(emoji => `<option value="${emoji.value}">${emoji.display}</option>`).join('');
     if (activityIndex > -1) {
         const activity = quoteGroupsData[groupId].itineraryData.days[dayIndex].activities[activityIndex];
-        Object.keys(activity).forEach(key => { const input = form.querySelector(`#ipActivity${key.charAt(0).toUpperCase() + key.slice(1)}`); if (input) input.value = activity[key] || ''; });
+        if (!activity) {
+            showToastMessage('수정할 일정 데이터를 찾을 수 없습니다.', true);
+            return;
+        }
+
+        const setValue = (selector, value) => {
+            const field = form.querySelector(selector);
+            if (field) field.value = value ?? '';
+        };
+
+        setValue('#ipActivityTimeInput', activity.time);
+        setValue('#ipActivityTitle', activity.title);
+        setValue('#ipActivityDescription', activity.description);
+        setValue('#ipActivityLocation', activity.locationLink);
+        setValue('#ipActivityImageUrl', activity.imageUrl);
+        setValue('#ipActivityCost', activity.cost);
+        setValue('#ipActivityNotes', activity.notes);
+        activityIconSelect.value = activity.icon ?? '';
     }
     modal.classList.remove('hidden');
 }
@@ -3139,6 +3427,30 @@ function setupEventListeners() {
         if(event.target.closest('#ipCloseLoadTemplateModal, #ipCancelLoadTemplateModal')) {
             document.getElementById('ipLoadTemplateModal').classList.add('hidden');
         }
+        if (event.target.closest('#ipCloseLoadAttractionModal, #ipCancelLoadAttractionModal')) {
+            ip_closeLoadAttractionModal();
+            ip_resetPendingAddActivityState();
+        }
+        if (event.target.closest('#ipChoiceCancelBtn')) {
+            ip_closeAddActivityChoiceModal();
+            ip_resetPendingAddActivityState();
+        }
+        if (event.target.closest('#ipChoiceFromDbBtn')) {
+            ip_closeAddActivityChoiceModal();
+            ip_loadAttractionListFromFirestore();
+        }
+        if (event.target.closest('#ipChoiceNewInputBtn')) {
+            const groupId = ipPendingNewActivityGroupId;
+            const dayIndex = ipPendingNewActivityDayIndex;
+            ip_closeAddActivityChoiceModal();
+            if (groupId && Number.isInteger(dayIndex)) {
+                ip_openBlankActivityModal(groupId, dayIndex);
+                ip_resetPendingAddActivityState();
+            } else {
+                showToastMessage('새 일정 추가 대상 날짜를 찾을 수 없습니다.', true);
+                ip_resetPendingAddActivityState();
+            }
+        }
     });
 
     // --- 동적 컨텐츠 컨테이너 (이벤트 위임) ---
@@ -3294,7 +3606,13 @@ function setupEventListeners() {
         } else if (button.classList.contains('day-toggle-button')) {
              ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
         }
-        else if(button.id.startsWith('ip-')) {
+        else if (
+            button.id.startsWith('ip-') ||
+            button.classList.contains('add-activity-button') ||
+            button.classList.contains('edit-activity-button') ||
+            button.classList.contains('duplicate-activity-button') ||
+            button.classList.contains('delete-activity-button')
+        ) {
             if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
             else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
             else if (button.id.includes('inlinePreviewButton')) ip_handleInlinePreview(groupId);
@@ -3303,7 +3621,7 @@ function setupEventListeners() {
             else if (button.classList.contains('save-date-button')) ip_handleSaveDate(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId, button.previousElementSibling.value);
             else if (button.classList.contains('cancel-date-edit-button')) ip_handleCancelDateEdit(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
             else if (button.classList.contains('delete-day-button')) ip_showConfirmDeleteDayModal(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
-            else if (button.classList.contains('add-activity-button')) ip_openActivityModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
+            else if (button.classList.contains('add-activity-button')) ip_openAddActivityChoiceModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
             else if (button.classList.contains('edit-activity-button')) {
                 const card = button.closest('.ip-activity-card');
                 ip_openActivityModal(groupId, card.dataset.dayIndex, card.dataset.activityIndex);
@@ -3393,6 +3711,10 @@ function setupEventListeners() {
     });
     
     document.getElementById('ipActivityForm').addEventListener('submit', ip_handleActivityFormSubmit);
+    const ipAttractionSearchInput = document.getElementById('ipAttractionSearchInput');
+    if (ipAttractionSearchInput) {
+        ipAttractionSearchInput.addEventListener('input', ip_renderFilteredAttractionList);
+    }
     
     document.addEventListener('mousedown', (e) => {
         if (e.target.matches('.resizer-handle')) {
