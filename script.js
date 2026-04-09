@@ -129,7 +129,7 @@ class FileSession {
         
         // 활성 그룹 복원
         if (this.activeGroupId && this.quoteGroupsData[this.activeGroupId]) {
-            switchGroup(this.activeGroupId);
+            switchTab(this.activeGroupId);
         }
         
         // 이벤트 리스너 재바인딩 (중요!)
@@ -424,7 +424,7 @@ function rebindWorkspaceEventListeners() {
                     exclusionText: ''
                 };
                 createGroupUI(newGroupId);
-                switchGroup(newGroupId);
+                switchTab(newGroupId);
             });
         }
     }
@@ -442,7 +442,7 @@ function rebindWorkspaceEventListeners() {
                 quoteGroupsData[newGroupId] = JSON.parse(JSON.stringify(sourceData));
                 groupCounter++;
                 createGroupUI(newGroupId);
-                switchGroup(newGroupId);
+                switchTab(newGroupId);
                 
                 // 견적 복사 후 분할 패널 너비를 최소 너비로 재설정
                 setTimeout(resetSplitPaneWidths, 50);
