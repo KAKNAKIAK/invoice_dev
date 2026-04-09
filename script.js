@@ -1074,10 +1074,13 @@ const hmDb = firebase.firestore(hmFbApp);
 
 function initializeHotelMakerForGroup(container, groupId) {
     container.innerHTML = `
-        <div class="hm-controls flex flex-wrap gap-2 justify-end mb-4">
-            <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 코드 복사</button>
-            <button id="hm-previewHotelBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> 미리보기</button>
-            <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-green"><i class="fas fa-database"></i> DB 불러오기</button>
+        <div class="hm-controls flex items-center gap-2 mb-4" style="flex-wrap:nowrap;">
+            <h2 class="text-base font-semibold" style="flex-shrink:0;margin:0;">호텔카드 메이커</h2>
+            <div class="flex items-center gap-2" style="margin-left:auto;flex-shrink:0;">
+                <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 코드 복사</button>
+                <button id="hm-previewHotelBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> 미리보기</button>
+                <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-green"><i class="fas fa-database"></i> DB 불러오기</button>
+            </div>
         </div>
         <div id="hm-hotelTabsContainer-${groupId}" class="hm-tabs-container flex flex-wrap items-center border-b-2 border-gray-200 mb-4">
             <button id="hm-addHotelTabBtn-${groupId}" class="hotel-tab-button"><i class="fas fa-plus mr-2"></i>새 호텔 추가</button>
@@ -2565,17 +2568,9 @@ function initializeGroup(groupEl, groupId) {
                 </div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">새 여행 일정표</h2>
-                    <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
-                </div>
                 <div id="itinerary-planner-container-${groupId}"></div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">호텔카드 메이커</h2>
-                    <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
-                </div>
                 <div id="hotel-maker-container-${groupId}"></div>
             </section> 
         </div> 
