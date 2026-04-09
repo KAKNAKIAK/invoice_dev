@@ -635,7 +635,11 @@ function rebindWorkspaceEventListeners() {
                     button.classList.contains('add-activity-button') ||
                     button.classList.contains('edit-activity-button') ||
                     button.classList.contains('duplicate-activity-button') ||
-                    button.classList.contains('delete-activity-button')
+                    button.classList.contains('delete-activity-button') ||
+                    button.classList.contains('edit-date-button') ||
+                    button.classList.contains('save-date-button') ||
+                    button.classList.contains('cancel-date-edit-button') ||
+                    button.classList.contains('delete-day-button')
                 ) {
                     if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
                     else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
@@ -1525,7 +1529,7 @@ function ip_renderDays(groupId, container) {
         const collapsedIcon = `<svg class="toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
         let dateDisplayHTML = day.editingDate
             ? `<input type="text" class="date-edit-input-text" value="${day.date}" placeholder="YYYY-MM-DD"><button class="save-date-button icon-button" title="날짜 저장">${ip_saveIconSVG}</button><button class="cancel-date-edit-button icon-button" title="취소">${ip_cancelIconSVG}</button>`
-            : `<h2 class="day-header-title">${ip_formatDate(day.date, dayIndex + 1)}</h2><button class="edit-date-button icon-button ml-2" title="날짜 수정">${ip_editIconSVG}</button>`;
+            : `<h2 class="day-header-title">${ip_formatDate(day.date, dayIndex + 1)}</h2>`;
         daySection.innerHTML = `<div class="ip-day-header-container day-header-container"><div class="ip-day-header-main">${dateDisplayHTML}</div><div class="ip-day-header-controls"><button class="delete-day-button icon-button" title="이 날짜 삭제">${ip_deleteIconSVG}</button><button class="day-toggle-button icon-button">${day.isCollapsed ? collapsedIcon : expandedIcon}</button></div></div><div class="day-content-wrapper ${day.isCollapsed ? 'hidden' : ''}"><div class="activities-list ip-activities-list pt-4" data-day-index="${dayIndex}"></div><button class="add-activity-button mt-4 ml-2 btn btn-sm btn-outline"><i class="fas fa-plus mr-1"></i>일정 추가</button></div>`;
         daysContainer.appendChild(daySection);
         const activitiesList = daySection.querySelector('.activities-list');
@@ -3717,7 +3721,11 @@ function setupEventListeners() {
             button.classList.contains('add-activity-button') ||
             button.classList.contains('edit-activity-button') ||
             button.classList.contains('duplicate-activity-button') ||
-            button.classList.contains('delete-activity-button')
+            button.classList.contains('delete-activity-button') ||
+            button.classList.contains('edit-date-button') ||
+            button.classList.contains('save-date-button') ||
+            button.classList.contains('cancel-date-edit-button') ||
+            button.classList.contains('delete-day-button')
         ) {
             if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
             else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
