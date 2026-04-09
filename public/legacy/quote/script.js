@@ -1,21 +1,21 @@
-﻿
+
 // =======================================================================
-// 1. ?꾩뿭 蹂??諛??ㅼ젙
+// 1. 전역 변수 및 설정
 // =======================================================================
-let quoteGroupsData = {}; // 紐⑤뱺 寃ъ쟻 洹몃９???곗씠?곕? ??ν븯???듭떖 媛앹껜 (?꾩옱 ?쒖꽦 ?몄뀡怨??숆린?붾맖)
+let quoteGroupsData = {}; // 모든 견적 그룹의 데이터를 저장하는 핵심 객체 (현재 활성 세션과 동기화됨)
 let groupCounter = 0;
 let activeGroupId = null;
 let currentFileHandle = null;
 
 const ROW_DEFINITIONS = [
-    { id: 'airfare', label: '??났', type: 'costInput' }, { id: 'hotel', label: '?명뀛', type: 'costInput' },
-    { id: 'ground', label: '吏??, type: 'costInput' }, { id: 'insurance', label: '蹂댄뿕', type: 'costInput' },
-    { id: 'commission', label: '而ㅻ???, type: 'costInput' }, { id: 'addDynamicRow', label: '+', type: 'button' },
-    { id: 'netCost', label: '?룰?', type: 'calculated' }, { id: 'salesPrice', label: '?곹뭹媛', type: 'salesInput' },
-    { id: 'profitPerPerson', label: '1?몄닔??, type: 'calculated' }, { id: 'profitMargin', label: '1?몄닔?듬쪧', type: 'calculatedPercentage' }
+    { id: 'airfare', label: '항공', type: 'costInput' }, { id: 'hotel', label: '호텔', type: 'costInput' },
+    { id: 'ground', label: '지상', type: 'costInput' }, { id: 'insurance', label: '보험', type: 'costInput' },
+    { id: 'commission', label: '커미션', type: 'costInput' }, { id: 'addDynamicRow', label: '+', type: 'button' },
+    { id: 'netCost', label: '넷가', type: 'calculated' }, { id: 'salesPrice', label: '상품가', type: 'salesInput' },
+    { id: 'profitPerPerson', label: '1인수익', type: 'calculated' }, { id: 'profitMargin', label: '1인수익률', type: 'calculatedPercentage' }
 ];
 
-// Firebase ?곕룞 愿??蹂??諛?珥덇린??(硫붿씤 ??
+// Firebase 연동 관련 변수 및 초기화 (메인 앱)
 const firebaseConfig = {
     apiKey: "AIzaSyC7eXBtNczq0ylN5UZNyZaMUH3M-6Gicvc",
     authDomain: "memo-1-e9ee8.firebaseapp.com",
@@ -29,14 +29,14 @@ const fbApp = firebase.initializeApp(firebaseConfig, 'memoApp');
 const db = firebase.firestore(fbApp);
 
 // =======================================================================
-// 2. ?뚯씪 ???쒖뒪??- FileSession ?대옒?ㅼ? ?뚯씪 愿由?
+// 2. 파일 탭 시스템 - FileSession 클래스와 파일 관리
 // =======================================================================
 class FileSession {
-    constructor(fileId, displayName = '???뚯씪', fileHandle = null) {
+    constructor(fileId, displayName = '새 파일', fileHandle = null) {
         this.fileId = fileId;
         this.displayName = displayName;
         this.fileHandle = fileHandle;
-        this.quoteGroupsData = {}; // 湲곗〈 援ъ“ 洹몃?濡??좎?
+        this.quoteGroupsData = {}; // 기존 구조 그대로 유지
         this.groupCounter = 0;
         this.activeGroupId = null;
         this.memoText = '';
@@ -51,7 +51,7 @@ class FileSession {
         this.createdAt = new Date();
     }
 
-    // ?몄뀡???뷀떚 ?곹깭 愿由?
+    // 세션의 더티 상태 관리
     markDirty() {
         this.dirty = true;
         updateFileTabUI(this.fileId);
@@ -62,34 +62,34 @@ class FileSession {
         updateFileTabUI(this.fileId);
     }
 
-    // UI ?곹깭 ???
+    // UI 상태 저장
     saveUIState() {
         const workspace = document.getElementById('workspace');
         if (workspace) {
             this.uiState.scrollTop = workspace.scrollTop;
         }
         
-        // ?꾩옱 ?쒖꽦 寃ъ쟻 洹몃９ ???
+        // 현재 활성 견적 그룹 저장
         this.uiState.activeGroupId = activeGroupId;
         
-        // 硫붾え ?띿뒪?????
+        // 메모 텍스트 저장
         const memoTextarea = document.getElementById('memoText');
         if (memoTextarea) {
             this.memoText = memoTextarea.value;
         }
         
-        // 怨좉컼 ?뺣낫 ???
+        // 고객 정보 저장
         this.customerInfo = getCustomerData();
         
-        // ?꾩옱 寃ъ쟻 洹몃９ ?곗씠???숆린??
+        // 현재 견적 그룹 데이터 동기화
         if (activeGroupId) {
             syncGroupUIToData(activeGroupId);
         }
     }
 
-    // UI ?곹깭 蹂듭썝
+    // UI 상태 복원
     restoreUIState() {
-        // ?꾩뿭 蹂?섎뱾?????몄뀡??媛믪쑝濡?蹂듭썝
+        // 전역 변수들을 이 세션의 값으로 복원
         quoteGroupsData = this.quoteGroupsData;
         groupCounter = this.groupCounter;
         activeGroupId = this.activeGroupId;
@@ -99,13 +99,13 @@ class FileSession {
             workspace.scrollTop = this.uiState.scrollTop;
         }
         
-        // 硫붾え ?띿뒪??蹂듭썝
+        // 메모 텍스트 복원
         const memoTextarea = document.getElementById('memoText');
         if (memoTextarea) {
             memoTextarea.value = this.memoText || '';
         }
         
-        // 怨좉컼 ?뺣낫 蹂듭썝
+        // 고객 정보 복원
         const customerContainer = document.getElementById('customerInfoContainer');
         if (customerContainer) {
             customerContainer.innerHTML = '';
@@ -116,35 +116,35 @@ class FileSession {
             }
         }
         
-        // 寃ъ쟻 洹몃９ UI 蹂듭썝
+        // 견적 그룹 UI 복원
         const tabsContainer = document.getElementById('quoteGroupTabs');
         const contentsContainer = document.getElementById('quoteGroupContentsContainer');
         if (tabsContainer) tabsContainer.innerHTML = '';
         if (contentsContainer) contentsContainer.innerHTML = '';
         
-        // 紐⑤뱺 洹몃９ UI ?ㅼ떆 ?앹꽦
+        // 모든 그룹 UI 다시 생성
         Object.keys(this.quoteGroupsData).forEach(groupId => {
             createGroupUI(groupId);
         });
         
-        // ?쒖꽦 洹몃９ 蹂듭썝
+        // 활성 그룹 복원
         if (this.activeGroupId && this.quoteGroupsData[this.activeGroupId]) {
             switchGroup(this.activeGroupId);
         }
         
-        // ?대깽??由ъ뒪???щ컮?몃뵫 (以묒슂!)
-        console.log('?대깽??由ъ뒪???щ컮?몃뵫 以?..');
+        // 이벤트 리스너 재바인딩 (중요!)
+        console.log('이벤트 리스너 재바인딩 중...');
         rebindWorkspaceEventListeners();
-        console.log('?대깽??由ъ뒪???щ컮?몃뵫 ?꾨즺');
+        console.log('이벤트 리스너 재바인딩 완료');
     }
 }
 
-// ?뚯씪 愿由ъ옄
+// 파일 관리자
 const filesManager = new Map();
 let currentFileId = null;
 let fileIdCounter = 0;
 
-// ?명솚???덉씠??- 湲곗〈 肄붾뱶媛 怨꾩냽 ?묐룞?섎룄濡??섎뒗 ?ы띁 ?⑥닔??
+// 호환성 레이어 - 기존 코드가 계속 작동하도록 하는 헬퍼 함수들
 function getCurrentSession() {
     return filesManager.get(currentFileId);
 }
@@ -152,7 +152,7 @@ function getCurrentSession() {
 function getCurrentQuoteGroups() {
     const session = getCurrentSession();
     if (session) {
-        // ?꾩뿭 蹂?섏? ?몄뀡 ?곗씠???숆린??
+        // 전역 변수와 세션 데이터 동기화
         if (quoteGroupsData !== session.quoteGroupsData) {
             quoteGroupsData = session.quoteGroupsData;
         }
@@ -171,7 +171,7 @@ function updateCurrentSession() {
     }
 }
 
-// ?뚯씪 ??UI 愿由?
+// 파일 탭 UI 관리
 function createFileTab(fileId, displayName, isActive = false) {
     const tabsContainer = document.getElementById('fileTabsContainer');
     const tab = document.createElement('div');
@@ -180,21 +180,21 @@ function createFileTab(fileId, displayName, isActive = false) {
     }`;
     tab.dataset.fileId = fileId;
     
-    // ?뚯씪紐??쒖떆 (?뷀떚 ?곹깭 ?쒖떆 ?ы븿)
+    // 파일명 표시 (더티 상태 표시 포함)
     const nameSpan = document.createElement('span');
     nameSpan.className = 'text-sm font-medium truncate max-w-32';
     nameSpan.textContent = displayName;
     
     const dirtyIndicator = document.createElement('span');
     dirtyIndicator.className = 'dirty-indicator text-orange-500 ml-1';
-    dirtyIndicator.textContent = '??;
+    dirtyIndicator.textContent = '●';
     dirtyIndicator.style.display = 'none';
     
-    // ?リ린 踰꾪듉
+    // 닫기 버튼
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close-file-btn text-gray-400 hover:text-red-500 ml-1 p-1';
     closeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
-    closeBtn.title = '?뚯씪 ?リ린';
+    closeBtn.title = '파일 닫기';
     
     tab.appendChild(nameSpan);
     tab.appendChild(dirtyIndicator);
@@ -220,13 +220,13 @@ function updateFileTabUI(fileId) {
 function switchFileTab(newFileId) {
     if (currentFileId === newFileId) return;
     
-    // ?꾩옱 ?몄뀡 ?곹깭 ???
+    // 현재 세션 상태 저장
     if (currentFileId) {
         const currentSession = getCurrentSession();
         if (currentSession) {
             currentSession.saveUIState();
             
-            // DOM 罹먯떆???꾩옱 ?뚰겕?ㅽ럹?댁뒪 ???
+            // DOM 캐시에 현재 워크스페이스 저장
             const workspace = document.getElementById('workspace');
             if (workspace) {
                 currentSession.domCache = document.createDocumentFragment();
@@ -237,28 +237,28 @@ function switchFileTab(newFileId) {
         }
     }
     
-    // ???몄뀡?쇰줈 ?꾪솚
+    // 새 세션으로 전환
     currentFileId = newFileId;
     const newSession = getCurrentSession();
     if (!newSession) return;
     
-    // DOM 蹂듭썝
+    // DOM 복원
     const workspace = document.getElementById('workspace');
     if (workspace) {
         workspace.innerHTML = '';
         if (newSession.domCache) {
             workspace.appendChild(newSession.domCache);
-            newSession.domCache = null; // 罹먯떆 ?뺣━
+            newSession.domCache = null; // 캐시 정리
         } else {
-            // 泥?踰덉㎏ 濡쒕뱶??湲곕낯 援ъ“ ?앹꽦
+            // 첫 번째 로드시 기본 구조 생성
             initializeWorkspaceForSession(newSession);
         }
     }
     
-    // UI ?곹깭 蹂듭썝
+    // UI 상태 복원
     newSession.restoreUIState();
     
-    // ??UI ?낅뜲?댄듃
+    // 탭 UI 업데이트
     document.querySelectorAll('.file-tab').forEach(tab => {
         const isActive = tab.dataset.fileId === newFileId;
         tab.className = `file-tab flex items-center gap-2 px-3 py-2 rounded-md transition-all cursor-pointer ${
@@ -266,12 +266,12 @@ function switchFileTab(newFileId) {
         }`;
     });
     
-    // 寃ъ쟻 洹몃９ ???곸뿭 珥덇린??諛??ш뎄??
+    // 견적 그룹 탭 영역 초기화 및 재구성
     const tabsContainer = document.getElementById('quoteGroupTabs');
     if (tabsContainer) {
-        tabsContainer.innerHTML = ''; // 湲곗〈 ??뱾 紐⑤몢 ?쒓굅
+        tabsContainer.innerHTML = ''; // 기존 탭들 모두 제거
         
-        // 寃ъ쟻 洹몃９ UI ?ㅼ떆 ?뚮뜑留?
+        // 견적 그룹 UI 다시 렌더링
         if (Object.keys(newSession.quoteGroupsData).length > 0) {
             Object.keys(newSession.quoteGroupsData).forEach(id => createGroupUI(id));
             if (newSession.activeGroupId && newSession.quoteGroupsData[newSession.activeGroupId]) {
@@ -285,7 +285,7 @@ function switchFileTab(newFileId) {
         }
     }
     
-    // ?뚯씪 ???꾪솚 ???꾩슂???대깽??由ъ뒪???щ컮?몃뵫
+    // 파일 탭 전환 후 필요한 이벤트 리스너 재바인딩
     rebindWorkspaceEventListeners();
 }
 
@@ -331,12 +331,12 @@ function makeTabNameEditable(spanElement, groupId) {
     });
 }
 
-// ?뚰겕?ㅽ럹?댁뒪 ???대깽??由ъ뒪?덈? ?ㅼ떆 諛붿씤?⑺븯???⑥닔
+// 워크스페이스 내 이벤트 리스너를 다시 바인딩하는 함수
 function rebindWorkspaceEventListeners() {
-    // ?뚯씪 遺덈윭?ㅺ린 label ?대깽???щ컮?몃뵫
+    // 파일 불러오기 label 이벤트 재바인딩
     const loadFileLabel = document.querySelector('label[for="loadFile"]');
     if (loadFileLabel) {
-        // 湲곗〈 ?대깽???쒓굅 ???덈줈 諛붿씤??
+        // 기존 이벤트 제거 후 새로 바인딩
         loadFileLabel.replaceWith(loadFileLabel.cloneNode(true));
         const newLoadFileLabel = document.querySelector('label[for="loadFile"]');
         if (newLoadFileLabel) {
@@ -347,7 +347,7 @@ function rebindWorkspaceEventListeners() {
         }
     }
     
-    // ?뚰겕?ㅽ럹?댁뒪 ?ㅻ뜑 踰꾪듉???대깽??由ъ뒪???щ컮?몃뵫
+    // 워크스페이스 헤더 버튼들 이벤트 리스너 재바인딩
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
         saveBtn.replaceWith(saveBtn.cloneNode(true));
@@ -404,7 +404,7 @@ function rebindWorkspaceEventListeners() {
         }
     }
 
-    // 寃ъ쟻 洹몃９ 踰꾪듉???대깽??諛붿씤??
+    // 견적 그룹 버튼들 이벤트 바인딩
     const newGroupBtn = document.getElementById('newGroupBtn');
     if (newGroupBtn) {
         newGroupBtn.replaceWith(newGroupBtn.cloneNode(true));
@@ -414,12 +414,12 @@ function rebindWorkspaceEventListeners() {
                 groupCounter++;
                 const newGroupId = `group_${Date.now()}`;
                 quoteGroupsData[newGroupId] = {
-                    name: `寃ъ쟻 ${groupCounter}`,
+                    name: `견적 ${groupCounter}`,
                     calculators: [],
                     flightSchedule: [],
                     priceInfo: [],
-                    hotelMakerData: { allHotelData: [{ nameKo: '???명뀛 1', nameEn: "", website: "", image: "", description: "" }], currentHotelIndex: 0 },
-                    itineraryData: { title: "???쇱젙??, days: [], editingTitle: false },
+                    hotelMakerData: { allHotelData: [{ nameKo: '새 호텔 1', nameEn: "", website: "", image: "", description: "" }], currentHotelIndex: 0 },
+                    itineraryData: { title: "새 일정표", days: [], editingTitle: false },
                     inclusionText: '',
                     exclusionText: ''
                 };
@@ -435,7 +435,7 @@ function rebindWorkspaceEventListeners() {
         const newCopyGroupBtn = document.getElementById('copyGroupBtn');
         if (newCopyGroupBtn) {
             newCopyGroupBtn.addEventListener('click', () => {
-                if (!activeGroupId) { showToastMessage('蹂듭궗??洹몃９??癒쇱? ?좏깮?섏꽭??', true); return; }
+                if (!activeGroupId) { showToastMessage('복사할 그룹을 먼저 선택하세요.', true); return; }
                 syncGroupUIToData(activeGroupId);
                 const sourceData = quoteGroupsData[activeGroupId];
                 const newGroupId = `group_${Date.now()}`;
@@ -444,10 +444,10 @@ function rebindWorkspaceEventListeners() {
                 createGroupUI(newGroupId);
                 switchGroup(newGroupId);
                 
-                // 寃ъ쟻 蹂듭궗 ??遺꾪븷 ?⑤꼸 ?덈퉬瑜?理쒖냼 ?덈퉬濡??ъ꽕??
+                // 견적 복사 후 분할 패널 너비를 최소 너비로 재설정
                 setTimeout(resetSplitPaneWidths, 50);
                 
-                showToastMessage('洹몃９??蹂듭궗?섏뿀?듬땲??');
+                showToastMessage('그룹이 복사되었습니다.');
             });
         }
     }
@@ -461,15 +461,15 @@ function rebindWorkspaceEventListeners() {
         }
     }
 
-    // quoteGroupContentsContainer ?대깽???꾩엫 ?щ컮?몃뵫
+    // quoteGroupContentsContainer 이벤트 위임 재바인딩
     const contentsContainer = document.getElementById('quoteGroupContentsContainer');
     if (contentsContainer) {
-        // 湲곗〈 ?대깽???쒓굅 ???덈줈 諛붿씤??
+        // 기존 이벤트 제거 후 새로 바인딩
         contentsContainer.replaceWith(contentsContainer.cloneNode(true));
         const newContentsContainer = document.getElementById('quoteGroupContentsContainer');
         if (newContentsContainer) {
         newContentsContainer.addEventListener('click', (event) => {
-            console.log('?대┃ ?대깽??媛먯???', event.target);
+            console.log('클릭 이벤트 감지됨:', event.target);
             const target = event.target;
             const button = target.closest('button');
 
@@ -483,19 +483,19 @@ function rebindWorkspaceEventListeners() {
                 return;
             }
             
-            console.log('踰꾪듉 ?대┃??', button, 'classes:', button.className);
+            console.log('버튼 클릭됨:', button, 'classes:', button.className);
             const groupId = button.closest('.calculation-group-content')?.id.split('-').pop();
             console.log('groupId:', groupId);
 
                 if (button.classList.contains('add-calculator-btn')) {
                     syncGroupUIToData(groupId);
                     const groupData = quoteGroupsData[groupId];
-                    const newCalcData = { id: `calc_${Date.now()}`, pnr: '', tableHTML: null, pnrTitle: 'PNR ?뺣낫' };
+                    const newCalcData = { id: `calc_${Date.now()}`, pnr: '', tableHTML: null, pnrTitle: 'PNR 정보' };
                     groupData.calculators.push(newCalcData);
                     renderCalculators(groupId);
                 } else if (button.classList.contains('copy-last-calculator-btn')) {
                      const groupData = quoteGroupsData[groupId];
-                    if (!groupData || groupData.calculators.length === 0) { showToastMessage('蹂듭궗??寃ъ쟻 怨꾩궛???놁뒿?덈떎.', true); return; }
+                    if (!groupData || groupData.calculators.length === 0) { showToastMessage('복사할 견적 계산이 없습니다.', true); return; }
                     syncGroupUIToData(groupId);
                     const lastCalculatorData = groupData.calculators[groupData.calculators.length - 1];
                     const newCalcData = JSON.parse(JSON.stringify(lastCalculatorData));
@@ -503,7 +503,7 @@ function rebindWorkspaceEventListeners() {
                     groupData.calculators.push(newCalcData);
                     renderCalculators(groupId);
                 } else if (button.classList.contains('delete-calculator-btn')) {
-                    if (confirm('??寃ъ쟻 怨꾩궛湲곕? ??젣?섏떆寃좎뒿?덇퉴?')) {
+                    if (confirm('이 견적 계산기를 삭제하시겠습니까?')) {
                         const instance = button.closest('.calculator-instance');
                         const calcId = instance.dataset.calculatorId;
                         quoteGroupsData[groupId].calculators = quoteGroupsData[groupId].calculators.filter(c => c.id !== calcId);
@@ -511,12 +511,12 @@ function rebindWorkspaceEventListeners() {
                     }
                 } else if (button.classList.contains('add-person-type-btn')) {
                     const calcContainer = button.closest('.calculator-instance');
-                    addPersonTypeColumn(calcContainer, '?꾨룞', 1);
+                    addPersonTypeColumn(calcContainer, '아동', 1);
                 } else if (button.classList.contains('add-dynamic-row-btn')) {
                     const calcContainer = button.closest('.calculator-instance');
                     addDynamicCostRow(calcContainer);
                 } else if (button.classList.contains('remove-col-btn')) {
-                    if (confirm('?대떦 ??ぉ????젣?섏떆寃좎뒿?덇퉴?')) {
+                    if (confirm('해당 항목을 삭제하시겠습니까?')) {
                         const headerCell = button.closest('th');
                         const colIndex = Array.from(headerCell.parentNode.children).indexOf(headerCell);
                         const calcContainer = button.closest('.calculator-instance');
@@ -525,7 +525,7 @@ function rebindWorkspaceEventListeners() {
                         calculateAll(calcContainer);
                     }
                 } else if (button.classList.contains('dynamic-row-delete-btn')) {
-                    if (confirm('?대떦 ??ぉ????젣?섏떆寃좎뒿?덇퉴?')) {
+                    if (confirm('해당 항목을 삭제하시겠습니까?')) {
                          const calcContainer = button.closest('.calculator-instance');
                          button.closest('tr').remove();
                          calculateAll(calcContainer);
@@ -560,9 +560,9 @@ function rebindWorkspaceEventListeners() {
                 } else if (button.classList.contains('add-price-subgroup-btn')) {
                     const priceContainer = button.closest('section').querySelector('.price-info-container');
                     const defaultRows = [
-                        { item: "?깆씤?붽툑", price: "0", count: "1", remarks: "" },
-                        { item: "?뚯븘?붽툑", price: "0", count: "0", remarks: "留?~12?몃?留? },
-                        { item: "?좎븘?붽툑", price: "0", count: "0", remarks: "留?4媛쒖썡誘몃쭔" }
+                        { item: "성인요금", price: "0", count: "1", remarks: "" },
+                        { item: "소아요금", price: "0", count: "0", remarks: "만2~12세미만" },
+                        { item: "유아요금", price: "0", count: "0", remarks: "만24개월미만" }
                     ];
                     const sg = { id: `price_sub_${Date.now()}`, title: "", rows: defaultRows };
                     if (!quoteGroupsData[groupId].priceInfo) quoteGroupsData[groupId].priceInfo = [];
@@ -571,9 +571,9 @@ function rebindWorkspaceEventListeners() {
                 } else if (button.classList.contains('load-inclusion-exclusion-db-btn')) {
                     openLoadInclusionsModal();
                 } else if (button.classList.contains('copy-inclusion-btn')) {
-                    copyToClipboard(button.closest('div').nextElementSibling.value, '?ы븿 ?댁뿭');
+                    copyToClipboard(button.closest('div').nextElementSibling.value, '포함 내역');
                 } else if (button.classList.contains('copy-exclusion-btn')) {
-                    copyToClipboard(button.closest('div').nextElementSibling.value, '遺덊룷???댁뿭');
+                    copyToClipboard(button.closest('div').nextElementSibling.value, '불포함 내역');
                 } else if (button.classList.contains('delete-dynamic-section-btn')) {
                     const section = button.closest('.dynamic-section');
                     if (section.classList.contains('flight-schedule-subgroup')) {
@@ -609,7 +609,7 @@ function rebindWorkspaceEventListeners() {
                         if (subgroupData.rows.length > 1) {
                             subgroupData.rows.splice(rowIndex, 1);
                         } else {
-                             showToastMessage('理쒖냼 ??媛쒖쓽 ?붽툑 ??ぉ? ?좎??댁빞 ?⑸땲??', true);
+                             showToastMessage('최소 한 개의 요금 항목은 유지해야 합니다.', true);
                              return;
                         }
                     }
@@ -620,13 +620,7 @@ function rebindWorkspaceEventListeners() {
                 } else if (button.classList.contains('day-toggle-button')) {
                      ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                 }
-                else if (
-                    button.id.startsWith('ip-') ||
-                    button.classList.contains('add-activity-button') ||
-                    button.classList.contains('edit-activity-button') ||
-                    button.classList.contains('duplicate-activity-button') ||
-                    button.classList.contains('delete-activity-button')
-                ) {
+                else if(button.id.startsWith('ip-')) {
                     if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
                     else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
                     else if (button.id.includes('inlinePreviewButton')) ip_handleInlinePreview(groupId);
@@ -635,30 +629,30 @@ function rebindWorkspaceEventListeners() {
                     else if (button.classList.contains('save-date-button')) ip_handleSaveDate(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId, button.previousElementSibling.value);
                     else if (button.classList.contains('cancel-date-edit-button')) ip_handleCancelDateEdit(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
                     else if (button.classList.contains('delete-day-button')) ip_showConfirmDeleteDayModal(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
-                    else if (button.classList.contains('add-activity-button')) ip_openAddActivityChoiceModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
+                    else if (button.classList.contains('add-activity-button')) ip_openActivityModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
                     else if (button.classList.contains('edit-activity-button')) {
-                        console.log('?몄쭛 踰꾪듉 ?대┃??- ?꾩옱 鍮꾪솢?깊솕??);
-                        // ?몄쭛 湲곕뒫 鍮꾪솢?깊솕
+                        console.log('편집 버튼 클릭됨 - 현재 비활성화됨');
+                        // 편집 기능 비활성화
                         return;
                     } else if (button.classList.contains('duplicate-activity-button')) {
-                        console.log('蹂듭젣 踰꾪듉 ?대┃??- ?꾩옱 鍮꾪솢?깊솕??);
-                        // 蹂듭젣 湲곕뒫 鍮꾪솢?깊솕
+                        console.log('복제 버튼 클릭됨 - 현재 비활성화됨');
+                        // 복제 기능 비활성화
                         return;
                     } else if (button.classList.contains('delete-activity-button')) {
-                        console.log('??젣 踰꾪듉 ?대┃??); // ?붾쾭源낆슜
+                        console.log('삭제 버튼 클릭됨'); // 디버깅용
                         const card = button.closest('.ip-activity-card');
                         if (card) {
-                            if (confirm('???쇱젙????젣?섏떆寃좎뒿?덇퉴?')) {
+                            if (confirm('이 일정을 삭제하시겠습니까?')) {
                                 ip_handleDeleteActivity(groupId, card.dataset.dayIndex, card.dataset.activityIndex);
                             }
                         } else {
-                            console.error('?쒕룞 移대뱶瑜?李얠쓣 ???놁뒿?덈떎');
+                            console.error('활동 카드를 찾을 수 없습니다');
                         }
                     }
                 }
             });
             
-            // 異붽? ?대깽??由ъ뒪?덈뱾???щ컮?몃뵫
+            // 추가 이벤트 리스너들도 재바인딩
             newContentsContainer.addEventListener('focusin', (event) => {
                 const target = event.target;
                 if (target.matches('.cost-item, .sales-price')) {
@@ -726,10 +720,10 @@ function rebindWorkspaceEventListeners() {
                 if(event.target.matches('.sales-price')) {
                     const expression = event.target.dataset.formula || event.target.value;
                     const calculatedValue = evaluateMath(expression).toString();
-                    copyToClipboard(calculatedValue, '?곹뭹媛');
+                    copyToClipboard(calculatedValue, '상품가');
                 } else if(event.target.matches('.copy-customer-info-btn')) {
                      const inputElement = event.target.closest('div').querySelector('input');
-                     copyToClipboard(inputElement.value, '怨좉컼?뺣낫');
+                     copyToClipboard(inputElement.value, '고객정보');
                 } else if (event.target.matches('.cost-row-label-span')) {
                     const span = event.target;
                     const groupId = span.closest('.calculation-group-content')?.id.split('-').pop();
@@ -779,19 +773,16 @@ function rebindWorkspaceEventListeners() {
                     }
                 }
             });
-
-            // Rebind 怨쇱젙?먯꽌 cloneNode(true)濡?Sortable 諛붿씤?⑹씠 ?щ씪吏????덉뼱
-            // ?뚮뜑 ?꾨즺 ???쇱젙??drag/drop???ㅼ떆 珥덇린?뷀븳??
-            reinitializeItineraryDragAndDrop(newContentsContainer);
-            console.log('quoteGroupContentsContainer ?대깽??由ъ뒪???щ컮?몃뵫 ?꾨즺');
+            
+            console.log('quoteGroupContentsContainer 이벤트 리스너 재바인딩 완료');
         } else {
-            console.error('newContentsContainer瑜?李얠쓣 ???놁뒿?덈떎');
+            console.error('newContentsContainer를 찾을 수 없습니다');
         }
     } else {
-        console.error('quoteGroupContentsContainer瑜?李얠쓣 ???놁뒿?덈떎');
+        console.error('quoteGroupContentsContainer를 찾을 수 없습니다');
     }
 
-    // 寃ъ쟻 洹몃９ ??而⑦뀒?대꼫 ?대깽???꾩엫 ?щ컮?몃뵫
+    // 견적 그룹 탭 컨테이너 이벤트 위임 재바인딩
     const quoteGroupTabs = document.getElementById('quoteGroupTabs');
     if (quoteGroupTabs) {
         quoteGroupTabs.replaceWith(quoteGroupTabs.cloneNode(true));
@@ -820,7 +811,7 @@ function rebindWorkspaceEventListeners() {
         }
     }
     
-    // 怨좉컼 ?뺣낫 而⑦뀒?대꼫 ?대깽???꾩엫 ?щ컮?몃뵫
+    // 고객 정보 컨테이너 이벤트 위임 재바인딩
     const customerInfoContainer = document.getElementById('customerInfoContainer');
     if (customerInfoContainer) {
         customerInfoContainer.addEventListener('click', (event) => {
@@ -828,16 +819,16 @@ function rebindWorkspaceEventListeners() {
             if (!button) return;
 
             if (button.classList.contains('remove-customer-btn')) {
-                if (confirm('??怨좉컼 ?뺣낫瑜???젣?섏떆寃좎뒿?덇퉴?')) {
+                if (confirm('이 고객 정보를 삭제하시겠습니까?')) {
                     button.closest('.p-4').remove();
                 }
             }
             else if (button.classList.contains('copy-customer-info-btn')) {
                 const inputElement = button.previousElementSibling;
                 if (inputElement && inputElement.value) {
-                    copyToClipboard(inputElement.value, '怨좉컼?뺣낫');
+                    copyToClipboard(inputElement.value, '고객정보');
                 } else {
-                    showToastMessage('蹂듭궗???댁슜???놁뒿?덈떎.', true);
+                    showToastMessage('복사할 내용이 없습니다.', true);
                 }
             }
         });
@@ -846,7 +837,7 @@ function rebindWorkspaceEventListeners() {
             const inputElement = event.target;
             if (inputElement.matches('input[type="text"], input[type="tel"], input[type="email"]')) {
                 if (inputElement.value) {
-                    copyToClipboard(inputElement.value, '怨좉컼?뺣낫');
+                    copyToClipboard(inputElement.value, '고객정보');
                 }
             }
         });
@@ -856,7 +847,7 @@ function rebindWorkspaceEventListeners() {
 function createNewFileTab(displayName = null) {
     fileIdCounter++;
     const fileId = `file_${fileIdCounter}_${Date.now()}`;
-    const fileName = displayName || `???뚯씪 ${fileIdCounter}`;
+    const fileName = displayName || `새 파일 ${fileIdCounter}`;
     
     const session = new FileSession(fileId, fileName);
     filesManager.set(fileId, session);
@@ -871,20 +862,20 @@ function closeFileTab(fileId) {
     const session = filesManager.get(fileId);
     if (!session) return;
     
-    // ?뷀떚 ?곹깭 ?뺤씤
+    // 더티 상태 확인
     if (session.dirty) {
-        const result = confirm(`'${session.displayName}' ?뚯씪????ν븯吏 ?딆? 蹂寃쎌궗??씠 ?덉뒿?덈떎. ?뺣쭚 ?レ쑝?쒓쿋?듬땲源?`);
+        const result = confirm(`'${session.displayName}' 파일에 저장하지 않은 변경사항이 있습니다. 정말 닫으시겠습니까?`);
         if (!result) return;
     }
     
-    // ???쒓굅
+    // 탭 제거
     const tab = document.querySelector(`[data-file-id="${fileId}"]`);
     if (tab) tab.remove();
     
-    // ?몄뀡 ?쒓굅
+    // 세션 제거
     filesManager.delete(fileId);
     
-    // ?ㅻⅨ ??쑝濡??꾪솚?섍굅???????앹꽦
+    // 다른 탭으로 전환하거나 새 탭 생성
     if (currentFileId === fileId) {
         const remainingFiles = Array.from(filesManager.keys());
         if (remainingFiles.length > 0) {
@@ -896,29 +887,29 @@ function closeFileTab(fileId) {
 }
 
 function initializeWorkspaceForSession(session) {
-    // 湲곕낯 ?뚰겕?ㅽ럹?댁뒪 HTML 援ъ“ ?앹꽦
+    // 기본 워크스페이스 HTML 구조 생성
     const workspace = document.getElementById('workspace');
     workspace.innerHTML = `
         <header class="mb-8 flex justify-between items-center">
             <div class="flex items-baseline gap-4">
-                <h1 class="text-3xl font-bold text-indigo-700">2025 寃ъ쟻</h1>
-                <a href="./manual/index.html" target="_blank" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline">?ъ슜 留ㅻ돱??/a>
+                <h1 class="text-3xl font-bold text-indigo-700">2025 견적</h1>
+                <a href="./manual/index.html" target="_blank" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline">사용 매뉴얼</a>
             </div>
             <div class="flex items-center space-x-2 flex-wrap">
-                <button type="button" id="newWindowBtn" class="btn btn-sm btn-secondary"><i class="far fa-window-restore"></i> ?덉갹(Shift+N)</button>
-                <button type="button" id="saveBtn" class="btn btn-sm btn-secondary"><i class="fas fa-save"></i> ???F2)</button>
-                <button type="button" id="saveAsBtn" class="btn btn-sm btn-secondary"><i class="fas fa-file-export"></i> ?ㅻⅨ ?대쫫?쇰줈 ???F3)</button>
-                <label for="loadFile" class="btn btn-sm btn-secondary cursor-pointer"><i class="fas fa-folder-open"></i> 遺덈윭?ㅺ린(F4)</label>
-                <button type="button" id="recentFilesBtn" class="btn btn-sm btn-secondary"><i class="fas fa-history"></i> 理쒓렐 ?뚯씪(Shift+Y)</button>
+                <button type="button" id="newWindowBtn" class="btn btn-sm btn-secondary"><i class="far fa-window-restore"></i> 새창(Shift+N)</button>
+                <button type="button" id="saveBtn" class="btn btn-sm btn-secondary"><i class="fas fa-save"></i> 저장(F2)</button>
+                <button type="button" id="saveAsBtn" class="btn btn-sm btn-secondary"><i class="fas fa-file-export"></i> 다른 이름으로 저장(F3)</button>
+                <label for="loadFile" class="btn btn-sm btn-secondary cursor-pointer"><i class="fas fa-folder-open"></i> 불러오기(F4)</label>
+                <button type="button" id="recentFilesBtn" class="btn btn-sm btn-secondary"><i class="fas fa-history"></i> 최근 파일(Shift+Y)</button>
             </div>
         </header>
         <form id="quoteForm" onsubmit="return false;">
             <div class="flex flex-col lg:flex-row gap-6 mb-8">
                 <section class="lg:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-base font-semibold text-gray-800">怨좉컼 ?뺣낫</h2>
+                        <h2 class="text-base font-semibold text-gray-800">고객 정보</h2>
                         <button type="button" id="addCustomerBtn" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                            <i class="fas fa-plus-circle mr-1"></i>?곕씫泥?異붽?
+                            <i class="fas fa-plus-circle mr-1"></i>연락처 추가
                         </button>
                     </div>
                     <div id="customerInfoContainer" class="flex flex-wrap gap-4"></div>
@@ -926,21 +917,21 @@ function initializeWorkspaceForSession(session) {
                 <div class="lg:w-1/2 flex flex-col sm:flex-row gap-6">
                     <section class="w-full sm:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg flex flex-col">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-base font-semibold text-gray-800">硫붾え</h2>
+                            <h2 class="text-base font-semibold text-gray-800">메모</h2>
                             <button type="button" id="loadMemoFromDbBtn" class="btn btn-sm btn-outline"><i class="fas fa-database mr-1"></i> DB</button>
                         </div>
-                        <textarea id="memoText" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="硫붾え ?낅젰..."></textarea>
-                        <button type="button" id="copyMemoBtn" class="mt-2 btn btn-sm btn-outline"><i class="far fa-copy"></i> 硫붾え 蹂듭궗</button>
+                        <textarea id="memoText" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="메모 입력..."></textarea>
+                        <button type="button" id="copyMemoBtn" class="mt-2 btn btn-sm btn-outline"><i class="far fa-copy"></i> 메모 복사</button>
                     </section>
                     <section class="w-full sm:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg">
-                        <h2 class="text-base font-semibold text-gray-800 mb-4">?낅Т 蹂댁“ ??/h2>
+                        <h2 class="text-base font-semibold text-gray-800 mb-4">업무 보조 툴</h2>
                         <div class="grid grid-cols-1 gap-2 mt-4">
-                            <a href="https://kaknakiak.github.io/ERPTOGDS/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">GDS ?뷀듃由??앹꽦湲?/a>
-                            <a href="https://kaknakiak.github.io/PNRTOERP/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">PNR ?ㅼ엫?꾨뱶異붿텧</a>
-                            <a href="https://incomparable-meringue-d33b6b.netlify.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">媛꾪렪 URL ?⑥텞湲?/a>
-                            <a href="https://kaknakiak.github.io/hotelbooking/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">?명뀛 ?섎같???묒꽦湲?/a>
-                            <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">?명뀛移대뱶 硫붿씠而?/a>
-                            <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">?곸꽭?쇱젙??/a>
+                            <a href="https://kaknakiak.github.io/ERPTOGDS/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">GDS 엔트리 생성기</a>
+                            <a href="https://kaknakiak.github.io/PNRTOERP/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">PNR 네임필드추출</a>
+                            <a href="https://incomparable-meringue-d33b6b.netlify.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">간편 URL 단축기</a>
+                            <a href="https://kaknakiak.github.io/hotelbooking/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">호텔 수배서 작성기</a>
+                            <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">호텔카드 메이커</a>
+                            <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline text-center">상세일정표</a>
                         </div>
                     </section>
                 </div>
@@ -949,9 +940,9 @@ function initializeWorkspaceForSession(session) {
             <div class="quote-group-controls">
                 <div id="quoteGroupTabs" class="quote-group-tabs-container"></div>
                 <div class="quote-group-buttons">
-                    <button type="button" id="newGroupBtn" class="btn btn-sm btn-blue"><i class="fas fa-plus"></i> ??洹몃９</button>
-                    <button type="button" id="copyGroupBtn" class="btn btn-sm btn-yellow"><i class="fas fa-copy"></i> 洹몃９ 蹂듭궗</button>
-                    <button type="button" id="deleteGroupBtn" class="btn btn-sm btn-red"><i class="fas fa-trash-alt"></i> 洹몃９ ??젣</button>
+                    <button type="button" id="newGroupBtn" class="btn btn-sm btn-blue"><i class="fas fa-plus"></i> 새 그룹</button>
+                    <button type="button" id="copyGroupBtn" class="btn btn-sm btn-yellow"><i class="fas fa-copy"></i> 그룹 복사</button>
+                    <button type="button" id="deleteGroupBtn" class="btn btn-sm btn-red"><i class="fas fa-trash-alt"></i> 그룹 삭제</button>
                 </div>
             </div>
             <div id="quoteGroupContentsContainer" class="border border-t-0 border-gray-300 rounded-lg rounded-tl-none p-4"></div>
@@ -960,7 +951,7 @@ function initializeWorkspaceForSession(session) {
 }
 
 // =======================================================================
-// 3. IndexedDB ?ы띁 ?⑥닔 (?뚯씪 ?몃뱾 ??μ쓣 ?꾪빐)
+// 3. IndexedDB 헬퍼 함수 (파일 핸들 저장을 위해)
 // =======================================================================
 const IDB_NAME = 'FileHandlesDB';
 const IDB_STORE_NAME = 'fileHandles';
@@ -1030,23 +1021,23 @@ async function deleteFileHandle(name) {
 }
 
 // =======================================================================
-// 3. GDS ?뚯꽌 ?곕룞 ?⑥닔
+// 3. GDS 파서 연동 함수
 // =======================================================================
 function addFlightsFromParser(parsedFlights) {
     if (!parsedFlights || parsedFlights.length === 0) return;
-    if (!activeGroupId) { showToastMessage("?뚯떛????났?몄쓣 異붽????쒖꽦 寃ъ쟻???놁뒿?덈떎.", true); return; }
+    if (!activeGroupId) { showToastMessage("파싱된 항공편을 추가할 활성 견적이 없습니다.", true); return; }
     const activeGroupData = quoteGroupsData[activeGroupId];
     const activeGroupElement = document.getElementById(`group-content-${activeGroupId}`);
     if (!activeGroupData || !activeGroupElement) return;
     const flightContainer = activeGroupElement.querySelector('.flight-schedule-container');
     const airlineCodeMap = {
-        "KE": "??쒗빆怨?, "OZ": "?꾩떆?꾨굹??났", "7C": "?쒖＜??났", "LJ": "吏꾩뿉??, "TW": "?곗썾?댄빆怨?, "RS": "?먯뼱?쒖슱", "BX": "?먯뼱遺??, "ZE": "?댁뒪???났",
-        "NH": "?꾩씪蹂멸났??ANA)", "JL": "?쇰낯??났", "MM": "?쇱튂??났", "CA": "以묎뎅援?젣??났", "MU": "以묎뎅?숇갑??났", "CZ": "以묎뎅?⑤갑??났", "CX": "罹먯꽭?댄띁?쒗뵿",
-        "CI": "以묓솕??났", "BR": "?먮컮??났", "SQ": "?깃??щⅤ??났", "TG": "??댄빆怨?, "VN": "踰좏듃?⑦빆怨?, "VJ": "鍮꾩뿣??빆怨?, "QH": "諭遺??났",
-        "PR": "?꾨━???났", "MH": "留먮젅?댁떆?꾪빆怨?, "GA": "媛猷⑤떎?몃룄?ㅼ떆?꾪빆怨?, "EK": "?먮??덉씠?명빆怨?, "QR": "移댄?瑜댄빆怨?, "EY": "?먰떚?섎뱶??났", "SV": "?ъ슦?붿븘??났", "TK": "?고궎??났",
-        "AA": "?꾨찓由ъ뭏??났", "UA": "?좊굹?댄떚?쒗빆怨?, "DL": "?명???났", "HA": "?섏??댁븞??났", "AS": "?뚮옒?ㅼ뭅??났", "AC": "?먯뼱罹먮굹??, "AM": "?꾩뿉濡쒕찕?쒖퐫",
-        "AF": "?먯뼱?꾨옉??, "KL": "KLM?ㅻ뜙??쒗빆怨?, "BA": "?곴뎅??났", "VS": "踰꾩쭊?좏??쒗떛", "LH": "猷⑦봽?명븳??, "AZ": "?뚮━?덈━??ITA)", "IB": "?대쿋由ъ븘??났", "LX": "?ㅼ쐞?ㅺ뎅?쒗빆怨?, "AY": "??먯뼱", "SU": "?꾩뿉濡쒗뵆濡쒗듃",
-        "QF": "肄댄??ㅽ빆怨?, "NZ": "?먯뼱?댁쭏?쒕뱶"
+        "KE": "대한항공", "OZ": "아시아나항공", "7C": "제주항공", "LJ": "진에어", "TW": "티웨이항공", "RS": "에어서울", "BX": "에어부산", "ZE": "이스타항공",
+        "NH": "전일본공수(ANA)", "JL": "일본항공", "MM": "피치항공", "CA": "중국국제항공", "MU": "중국동방항공", "CZ": "중국남방항공", "CX": "캐세이퍼시픽",
+        "CI": "중화항공", "BR": "에바항공", "SQ": "싱가포르항공", "TG": "타이항공", "VN": "베트남항공", "VJ": "비엣젯항공", "QH": "뱀부항공",
+        "PR": "필리핀항공", "MH": "말레이시아항공", "GA": "가루다인도네시아항공", "EK": "에미레이트항공", "QR": "카타르항공", "EY": "에티하드항공", "SV": "사우디아항공", "TK": "터키항공",
+        "AA": "아메리칸항공", "UA": "유나이티드항공", "DL": "델타항공", "HA": "하와이안항공", "AS": "알래스카항공", "AC": "에어캐나다", "AM": "아에로멕시코",
+        "AF": "에어프랑스", "KL": "KLM네덜란드항공", "BA": "영국항공", "VS": "버진애틀랜틱", "LH": "루프트한자", "AZ": "알리탈리아(ITA)", "IB": "이베리아항공", "LX": "스위스국제항공", "AY": "핀에어", "SU": "아에로플로트",
+        "QF": "콴타스항공", "NZ": "에어뉴질랜드"
     };
     const firstFlightAirlineCode = parsedFlights[0].airlineCode;
     const subgroupTitle = airlineCodeMap[firstFlightAirlineCode] || firstFlightAirlineCode;
@@ -1054,11 +1045,11 @@ function addFlightsFromParser(parsedFlights) {
     if (!activeGroupData.flightSchedule) activeGroupData.flightSchedule = [];
     activeGroupData.flightSchedule.push(newSubgroup);
     createFlightSubgroup(flightContainer, newSubgroup, activeGroupId);
-    showToastMessage("GDS ??났 ?뺣낫媛 異붽??섏뿀?듬땲??");
+    showToastMessage("GDS 항공 정보가 추가되었습니다.");
 }
 
 // =======================================================================
-// ?쇄뼹??4. ?명뀛移대뱶 硫붿씠而?(Hotel Maker) ?듯빀 肄붾뱶 ?쇄뼹??
+// ▼▼▼ 4. 호텔카드 메이커 (Hotel Maker) 통합 코드 ▼▼▼
 // =======================================================================
 const hmFirebaseConfig = {
     apiKey: "AIzaSyDsV5PGKMFdCDKgFfl077-DuaYv6N5kVNs",
@@ -1075,24 +1066,24 @@ const hmDb = firebase.firestore(hmFbApp);
 function initializeHotelMakerForGroup(container, groupId) {
     container.innerHTML = `
         <div class="hm-controls flex flex-wrap gap-2 justify-end mb-4">
-            <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 肄붾뱶 蹂듭궗</button>
-            <button id="hm-previewHotelBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> 誘몃━蹂닿린</button>
-            <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-green"><i class="fas fa-database"></i> DB 遺덈윭?ㅺ린</button>
+            <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 코드 복사</button>
+            <button id="hm-previewHotelBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> 미리보기</button>
+            <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-green"><i class="fas fa-database"></i> DB 불러오기</button>
         </div>
         <div id="hm-hotelTabsContainer-${groupId}" class="hm-tabs-container flex flex-wrap items-center border-b-2 border-gray-200 mb-4">
-            <button id="hm-addHotelTabBtn-${groupId}" class="hotel-tab-button"><i class="fas fa-plus mr-2"></i>???명뀛 異붽?</button>
+            <button id="hm-addHotelTabBtn-${groupId}" class="hotel-tab-button"><i class="fas fa-plus mr-2"></i>새 호텔 추가</button>
         </div>
         <div id="hm-hotelEditorForm-${groupId}" class="hm-editor-form">
             <div class="input-card-group bg-white p-4 rounded-lg border border-gray-200">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-field"><input type="text" id="hm-hotelNameKo-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelNameKo-${groupId}">?명뀛紐?(?쒓?)</label></div>
-                    <div class="form-field"><input type="text" id="hm-hotelNameEn-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelNameEn-${groupId}">?명뀛紐?(?곷Ц)</label></div>
+                    <div class="form-field"><input type="text" id="hm-hotelNameKo-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelNameKo-${groupId}">호텔명 (한글)</label></div>
+                    <div class="form-field"><input type="text" id="hm-hotelNameEn-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelNameEn-${groupId}">호텔명 (영문)</label></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div class="form-field"><input type="url" id="hm-hotelWebsite-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelWebsite-${groupId}">?명뀛 ?뱀궗?댄듃</label></div>
-                    <div class="form-field"><input type="url" id="hm-hotelImage-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelImage-${groupId}">????대?吏 URL</label></div>
+                    <div class="form-field"><input type="url" id="hm-hotelWebsite-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelWebsite-${groupId}">호텔 웹사이트</label></div>
+                    <div class="form-field"><input type="url" id="hm-hotelImage-${groupId}" class="input-field" placeholder=" "><label for="hm-hotelImage-${groupId}">대표 이미지 URL</label></div>
                 </div>
-                <div class="form-field mt-4"><textarea id="hm-hotelDescription-${groupId}" class="input-field" rows="4" placeholder=" "></textarea><label for="hm-hotelDescription-${groupId}">媛꾨떒 ?ㅻ챸</label></div>
+                <div class="form-field mt-4"><textarea id="hm-hotelDescription-${groupId}" class="input-field" rows="4" placeholder=" "></textarea><label for="hm-hotelDescription-${groupId}">간단 설명</label></div>
             </div>
         </div>
     `;
@@ -1140,7 +1131,7 @@ function hm_renderTabs(groupId) {
         if (index === hotelData.currentHotelIndex) {
             tabButton.classList.add('active');
         }
-        tabButton.innerHTML = `<span class="tab-title">${hotel.nameKo || `???명뀛 ${index + 1}`}</span><i class="fas fa-times tab-delete-icon" title="???명뀛 ?뺣낫 ??젣"></i>`;
+        tabButton.innerHTML = `<span class="tab-title">${hotel.nameKo || `새 호텔 ${index + 1}`}</span><i class="fas fa-times tab-delete-icon" title="이 호텔 정보 삭제"></i>`;
         
         tabsContainer.insertBefore(tabButton, addBtn);
     });
@@ -1179,15 +1170,15 @@ function hm_switchTab(groupId, index) {
 function hm_addHotel(groupId) {
     hm_syncCurrentHotelData(groupId);
     const hotelData = quoteGroupsData[groupId].hotelMakerData;
-    const newHotel = { nameKo: `???명뀛 ${hotelData.allHotelData.length + 1}`, nameEn: "", website: "", image: "", description: "" };
+    const newHotel = { nameKo: `새 호텔 ${hotelData.allHotelData.length + 1}`, nameEn: "", website: "", image: "", description: "" };
     hotelData.allHotelData.push(newHotel);
     hm_switchTab(groupId, hotelData.allHotelData.length - 1);
 }
 
 function hm_deleteHotel(groupId, indexToDelete) {
     const hotelData = quoteGroupsData[groupId].hotelMakerData;
-    const hotelName = hotelData.allHotelData[indexToDelete].nameKo || `???명뀛 ${indexToDelete + 1}`;
-    if (!confirm(`'${hotelName}' ?명뀛????젣?섏떆寃좎뒿?덇퉴?`)) return;
+    const hotelName = hotelData.allHotelData[indexToDelete].nameKo || `새 호텔 ${indexToDelete + 1}`;
+    if (!confirm(`'${hotelName}' 호텔을 삭제하시겠습니까?`)) return;
 
     hotelData.allHotelData.splice(indexToDelete, 1);
 
@@ -1206,21 +1197,21 @@ function hm_copyOptimizedHtml(groupId) {
     hm_syncCurrentHotelData(groupId);
     const hotelData = quoteGroupsData[groupId].hotelMakerData;
     if (hotelData.currentHotelIndex === -1) {
-        showToastMessage('蹂듭궗???명뀛???좏깮?댁＜?몄슂.', true);
+        showToastMessage('복사할 호텔을 선택해주세요.', true);
         return;
     }
     const hotel = hotelData.allHotelData[hotelData.currentHotelIndex];
     const htmlToCopy = hm_generateHotelCardHtml(hotel);
     navigator.clipboard.writeText(htmlToCopy)
-        .then(() => showToastMessage('?명뀛 移대뱶 HTML 肄붾뱶媛 ?대┰蹂대뱶??蹂듭궗?섏뿀?듬땲??'))
-        .catch(err => showToastMessage('蹂듭궗???ㅽ뙣?덉뒿?덈떎.', true));
+        .then(() => showToastMessage('호텔 카드 HTML 코드가 클립보드에 복사되었습니다.'))
+        .catch(err => showToastMessage('복사에 실패했습니다.', true));
 }
 
 function hm_previewHotelInfo(groupId) {
     hm_syncCurrentHotelData(groupId);
     const hotelData = quoteGroupsData[groupId].hotelMakerData;
     if (hotelData.allHotelData.length === 0) {
-        showToastMessage('誘몃━蹂닿린???명뀛 ?뺣낫媛 ?놁뒿?덈떎.', true);
+        showToastMessage('미리보기할 호텔 정보가 없습니다.', true);
         return;
     }
     const previewHtml = hm_generateFullPreviewHtml(hotelData.allHotelData);
@@ -1230,7 +1221,7 @@ function hm_previewHotelInfo(groupId) {
         previewWindow.document.write(previewHtml);
         previewWindow.document.close();
     } else {
-        showToastMessage('?앹뾽??李⑤떒?섏뼱 誘몃━蹂닿린瑜??????놁뒿?덈떎.', true);
+        showToastMessage('팝업이 차단되어 미리보기를 열 수 없습니다.', true);
     }
 }
 
@@ -1243,11 +1234,11 @@ async function hm_openLoadHotelSetModal(groupId) {
     modal.className = "fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50";
     modal.innerHTML = `
         <div class="relative p-5 border w-11/12 md:w-1/2 lg:w-1/3 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center mb-3"><h3 class="text-lg font-medium">??λ맂 ?명뀛 ?뺣낫 遺덈윭?ㅺ린</h3><button id="hm_closeLoadHotelSetModalButton" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button></div>
-            <input type="text" id="hm_hotelSetSearchInput" placeholder="??λ맂 ?대쫫?쇰줈 寃??.." class="w-full p-2 mb-3 border rounded-md">
+            <div class="flex justify-between items-center mb-3"><h3 class="text-lg font-medium">저장된 호텔 정보 불러오기</h3><button id="hm_closeLoadHotelSetModalButton" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button></div>
+            <input type="text" id="hm_hotelSetSearchInput" placeholder="저장된 이름으로 검색..." class="w-full p-2 mb-3 border rounded-md">
             <ul id="hm_hotelSetListForLoad" class="mt-2 h-60 overflow-y-auto border rounded-md divide-y"></ul>
-            <div id="hm_loadingHotelSetListMsg" class="mt-2 text-sm" style="display:none;">紐⑸줉??遺덈윭?ㅻ뒗 以?..</div>
-            <div class="mt-4"><button id="hm_cancelLoadHotelSetModalButton" class="btn btn-outline w-full">?リ린</button></div>
+            <div id="hm_loadingHotelSetListMsg" class="mt-2 text-sm" style="display:none;">목록을 불러오는 중...</div>
+            <div class="mt-4"><button id="hm_cancelLoadHotelSetModalButton" class="btn btn-outline w-full">닫기</button></div>
         </div>
     `;
     document.body.appendChild(modal);
@@ -1270,14 +1261,14 @@ async function hm_openLoadHotelSetModal(groupId) {
         loadingMsg.style.display = 'none';
 
         const renderList = (sets) => {
-            listEl.innerHTML = sets.length ? '' : `<li class="p-3 text-center text-gray-500">寃곌낵媛 ?놁뒿?덈떎.</li>`;
+            listEl.innerHTML = sets.length ? '' : `<li class="p-3 text-center text-gray-500">결과가 없습니다.</li>`;
             sets.forEach(set => {
                 const li = document.createElement('li');
                 li.className = 'p-3 hover:bg-gray-100 cursor-pointer';
                 li.textContent = set.name;
                 li.addEventListener('click', () => {
                     hm_addHotelsFromDbToGroup(groupId, set.hotels);
-                    showToastMessage(`'${set.name}'???명뀛 ?뺣낫媛 ?꾩옱 紐⑸줉??異붽??섏뿀?듬땲??`);
+                    showToastMessage(`'${set.name}'의 호텔 정보가 현재 목록에 추가되었습니다.`);
                     closeModal();
                 });
                 listEl.appendChild(li);
@@ -1293,8 +1284,8 @@ async function hm_openLoadHotelSetModal(groupId) {
         renderList(allSets);
 
     } catch (error) {
-        loadingMsg.textContent = '紐⑸줉 濡쒕뵫 ?ㅽ뙣';
-        showToastMessage('?명뀛 紐⑸줉??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.', true);
+        loadingMsg.textContent = '목록 로딩 실패';
+        showToastMessage('호텔 목록을 불러오는 중 오류가 발생했습니다.', true);
     }
 }
 
@@ -1303,7 +1294,7 @@ function hm_addHotelsFromDbToGroup(groupId, hotelsToAdd) {
     hm_syncCurrentHotelData(groupId);
     const hotelData = quoteGroupsData[groupId].hotelMakerData;
     
-    if (hotelData.allHotelData.length === 1 && hotelData.allHotelData[0].nameKo.startsWith('???명뀛')) {
+    if (hotelData.allHotelData.length === 1 && hotelData.allHotelData[0].nameKo.startsWith('새 호텔')) {
         hotelData.allHotelData = JSON.parse(JSON.stringify(hotelsToAdd));
         hotelData.currentHotelIndex = 0;
     } else {
@@ -1315,10 +1306,10 @@ function hm_addHotelsFromDbToGroup(groupId, hotelsToAdd) {
 }
 
 /**
- * [?섏젙?? ?명뀛 移대뱶 HTML ?앹꽦 ?⑥닔
- * .txt ?뚯씪 湲곗???<div> 諛?flex ?덉씠?꾩썐?쇰줈 蹂寃?
- * @param {object} hotel - ?명뀛 ?뺣낫 媛앹껜
- * @returns {string} - <div> 湲곕컲 HTML 議곌컖
+ * [수정됨] 호텔 카드 HTML 생성 함수
+ * .txt 파일 기준의 <div> 및 flex 레이아웃으로 변경
+ * @param {object} hotel - 호텔 정보 객체
+ * @returns {string} - <div> 기반 HTML 조각
  */
 function hm_generateHotelCardHtml(hotel) {
     const placeholderImage = 'https://placehold.co/400x300/e2e8f0/cbd5e0?text=No+Image';
@@ -1326,20 +1317,20 @@ function hm_generateHotelCardHtml(hotel) {
 
     const descriptionItems = hotel.description ? hotel.description.split('\n').filter(line => line.trim() !== '') : [];
     const descriptionHtml = descriptionItems.map(item => `
-      <div style="margin-bottom: 6px; line-height: 1.6;"><span style="font-size: 12px; color: #34495e;">${item.replace(/??/g, '')}</span></div>`).join('');
+      <div style="margin-bottom: 6px; line-height: 1.6;"><span style="font-size: 12px; color: #34495e;">${item.replace(/● /g, '')}</span></div>`).join('');
 
     const websiteButtonHtml = hotel.website ? `
-      <div style="margin-top: 20px;"><a href="${hotel.website}" target="_blank" style="background-color: #3498db; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">?뱀궗?댄듃 諛붾줈媛湲?/a></div>` : '';
+      <div style="margin-top: 20px;"><a href="${hotel.website}" target="_blank" style="background-color: #3498db; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 12px;">웹사이트 바로가기</a></div>` : '';
 
-    // 湲곗〈 <table> 湲곕컲 肄붾뱶瑜?<div> 湲곕컲(泥⑤??뚯씪) 肄붾뱶濡??泥?
+    // 기존 <table> 기반 코드를 <div> 기반(첨부파일) 코드로 대체
     return `
-<div style="max-width: 750px; margin: 24px auto; font-family: 'Malgun Gothic', '留묒? 怨좊뵓', sans-serif; display: flex; flex-wrap: wrap; align-items: center; box-sizing: border-box;">
+<div style="max-width: 750px; margin: 24px auto; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; display: flex; flex-wrap: wrap; align-items: center; box-sizing: border-box;">
 
   <div style="width: 100%; max-width: 320px; margin-right: 24px; margin-bottom: 24px; box-sizing: border-box;">
     <div style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
-      <img src="${currentHotelImage}" alt="${hotel.nameKo || '?명뀛 ?대?吏'}" style="width: 100%; height: auto; display: block;" onerror="this.onerror=null; this.src='${placeholderImage}';">
+      <img src="${currentHotelImage}" alt="${hotel.nameKo || '호텔 이미지'}" style="width: 100%; height: auto; display: block;" onerror="this.onerror=null; this.src='${placeholderImage}';">
       <div style="padding: 16px 20px;">
-        <div style="font-size: 14px; font-weight: bold; color: #2c3e50;">${hotel.nameKo || '?명뀛紐??놁쓬'}</div>
+        <div style="font-size: 14px; font-weight: bold; color: #2c3e50;">${hotel.nameKo || '호텔명 없음'}</div>
         ${hotel.nameEn ? `<div style="font-size: 12px; color: #7f8c8d; margin-top: 4px;">${hotel.nameEn}</div>` : ''}
       </div>
     </div>
@@ -1357,7 +1348,7 @@ function hm_generateHotelCardHtml(hotel) {
 
 
 function hm_generateFullPreviewHtml(data) {
-    const hotelName = data.length > 0 ? data[0].nameKo : '?명뀛';
+    const hotelName = data.length > 0 ? data[0].nameKo : '호텔';
     const sliderHead = data.length > 1 ? `<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" /><script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>` : '';
     const sliderBodyScript = data.length > 1 ? `<script>new Swiper('.swiper', {loop: true, pagination: {el: '.swiper-pagination', clickable: true}, navigation: {nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev'}});</script>` : '';
     
@@ -1368,17 +1359,17 @@ function hm_generateFullPreviewHtml(data) {
     } else if (data.length === 1) {
         bodyContent = hm_generateHotelCardHtml(data[0]);
     } else {
-        bodyContent = '<h1 style="text-align: center;">?쒖떆???명뀛 ?뺣낫媛 ?놁뒿?덈떎.</h1>';
+        bodyContent = '<h1 style="text-align: center;">표시할 호텔 정보가 없습니다.</h1>';
     }
 
-    return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>?명뀛 ?덈궡: ${hotelName}</title>${sliderHead}<style>body{font-family:'Malgun Gothic',sans-serif;background-color:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:2rem;box-sizing:border-box;margin:0;}.swiper-slide{display:flex;justify-content:center;align-items:center;}</style></head><body>${bodyContent}${sliderBodyScript}</body></html>`;
+    return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>호텔 안내: ${hotelName}</title>${sliderHead}<style>body{font-family:'Malgun Gothic',sans-serif;background-color:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:2rem;box-sizing:border-box;margin:0;}.swiper-slide{display:flex;justify-content:center;align-items:center;}</style></head><body>${bodyContent}${sliderBodyScript}</body></html>`;
 }
 
 // =======================================================================
-// ?꿎뼯??4. ?명뀛移대뱶 硫붿씠而?(Hotel Maker) ?듯빀 肄붾뱶 ???꿎뼯??
+// ▲▲▲ 4. 호텔카드 메이커 (Hotel Maker) 통합 코드 끝 ▲▲▲
 // =======================================================================
 // =======================================================================
-// 5. ?곸꽭 ?쇱젙??(Itinerary Planner) ?듯빀 肄붾뱶
+// 5. 상세 일정표 (Itinerary Planner) 통합 코드
 // =======================================================================
 const ipFirebaseConfig = {
   apiKey: "AIzaSyAGULxdnWWnSc5eMCsqHeKGK9tmyHsxlv0",
@@ -1393,18 +1384,13 @@ const ipFbApp = firebase.initializeApp(ipFirebaseConfig, 'itineraryPlannerApp');
 const ipDb = firebase.firestore(ipFbApp);
 
 const ip_travelEmojis = [
-    { value: "", display: "?꾩씠肄??놁쓬" }, { value: "?뭷?뤋", display: "?뭷?뤋 留덉궗吏" }, { value: "?덌툘", display: "?덌툘 ??났" }, { value: "?룳", display: "?룳 ?숈냼" }, { value: "?띂截?, display: "?띂截??앹궗" }, { value: "?룢截?, display: "?룢截?愿愿??ㅻ궡)" }, { value: "?룥截?, display: "?룥截?愿愿??쇱쇅)" }, { value: "?슯", display: "?슯 ?대룞(?꾨낫)" }, { value: "?쉶", display: "?쉶 ?대룞(踰꾩뒪)" }, { value: "?쉮", display: "?쉮 ?대룞(湲곗감)" }, { value: "?슓", display: "?슓 ?대룞(諛?" }, { value: "?슃", display: "?슃 ?대룞(?앹떆)" }, { value: "?썚截?, display: "?썚截??쇳븨" }, { value: "?벜", display: "?벜 ?ъ쭊珥ъ쁺" }, { value: "?뿺截?, display: "?뿺截?怨꾪쉷/吏?? }, { value: "?뱦", display: "?뱦 以묒슂?μ냼" }, { value: "??, display: "??移댄럹/?댁떇" }, { value: "?렚", display: "?렚 怨듭뿰/臾명솕" }, { value: "?뮳", display: "?뮳 ?낅Т" }, { value: "?뱄툘", display: "?뱄툘 ?뺣낫" }
+    { value: "", display: "아이콘 없음" }, { value: "💆🏻", display: "💆🏻 마사지" }, { value: "✈️", display: "✈️ 항공" }, { value: "🏨", display: "🏨 숙소" }, { value: "🍽️", display: "🍽️ 식사" }, { value: "🏛️", display: "🏛️ 관광(실내)" }, { value: "🏞️", display: "🏞️ 관광(야외)" }, { value: "🚶", display: "🚶 이동(도보)" }, { value: "🚌", display: "🚌 이동(버스)" }, { value: "🚆", display: "🚆 이동(기차)" }, { value: "🚢", display: "🚢 이동(배)" }, { value: "🚕", display: "🚕 이동(택시)" }, { value: "🛍️", display: "🛍️ 쇼핑" }, { value: "📷", display: "📷 사진촬영" }, { value: "🗺️", display: "🗺️ 계획/지도" }, { value: "📌", display: "📌 중요장소" }, { value: "☕", display: "☕ 카페/휴식" }, { value: "🎭", display: "🎭 공연/문화" }, { value: "💼", display: "💼 업무" }, { value: "ℹ️", display: "ℹ️ 정보" }
 ];
 const ip_editIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`;
 const ip_saveIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
 const ip_cancelIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
 const ip_deleteIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
 const ip_duplicateIconSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
-const ip_syncFromDbIconSVG = `<svg fill="none" class="w-4 h-4" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>`;
-let ipPendingNewActivityGroupId = null;
-let ipPendingNewActivityDayIndex = null;
-let ipPendingSyncActivityIndex = null;
-let ipAllFetchedAttractions = [];
 
 function ip_generateId() { return 'id_' + Math.random().toString(36).substr(2, 9); }
 function dateToYyyyMmDd(date) {
@@ -1430,16 +1416,16 @@ function initializeItineraryPlannerForGroup(container, groupId) {
             <div class="flex justify-between items-center h-[50px]">
                 <div id="ip-headerTitleSection-${groupId}" class="ip-header-title-container"></div>
                 <div class="flex items-center space-x-2">
-                    <button id="ip-copyInlineHtmlButton-${groupId}" class="btn btn-sm btn-outline" title="?쇱젙??肄붾뱶 蹂듭궗"><i class="fas fa-copy"></i> 肄붾뱶 蹂듭궗</button>
-                    <button id="ip-inlinePreviewButton-${groupId}" class="btn btn-sm btn-outline" title="?몃씪???뺤떇 誘몃━蹂닿린"><i class="fas fa-eye"></i> 誘몃━蹂닿린</button>
-                    <button id="ip-loadFromDBBtn-${groupId}" class="btn btn-sm btn-green" title="DB?먯꽌 ?쇱젙 遺덈윭?ㅺ린"><i class="fas fa-database"></i><span class="inline ml-2">DB 遺덈윭?ㅺ린</span></button>
+                    <button id="ip-copyInlineHtmlButton-${groupId}" class="btn btn-sm btn-outline" title="일정표 코드 복사"><i class="fas fa-copy"></i> 코드 복사</button>
+                    <button id="ip-inlinePreviewButton-${groupId}" class="btn btn-sm btn-outline" title="인라인 형식 미리보기"><i class="fas fa-eye"></i> 미리보기</button>
+                    <button id="ip-loadFromDBBtn-${groupId}" class="btn btn-sm btn-green" title="DB에서 일정 불러오기"><i class="fas fa-database"></i><span class="inline ml-2">DB 불러오기</span></button>
                 </div>
             </div>
         </header>
         <main class="ip-main-content">
             <div id="ip-daysContainer-${groupId}" class="space-y-4"></div>
             <div class="add-day-button-container mt-6 text-center">
-                <button id="ip-addDayButton-${groupId}" class="btn btn-indigo"><i class="fas fa-plus mr-2"></i>???좎쭨 異붽?</button>
+                <button id="ip-addDayButton-${groupId}" class="btn btn-indigo"><i class="fas fa-plus mr-2"></i>새 날짜 추가</button>
             </div>
         </main>
     `;
@@ -1447,26 +1433,15 @@ function initializeItineraryPlannerForGroup(container, groupId) {
 }
 
 function ip_render(groupId) {
-    console.log(`?쇱젙 ?뚮뜑留??쒖옉: ${groupId}`);
+    console.log(`일정 렌더링 시작: ${groupId}`);
     const container = document.getElementById(`itinerary-planner-container-${groupId}`);
     if (!container) {
-        console.error(`?쇱젙 而⑦뀒?대꼫瑜?李얠쓣 ???놁뒿?덈떎: itinerary-planner-container-${groupId}`);
+        console.error(`일정 컨테이너를 찾을 수 없습니다: itinerary-planner-container-${groupId}`);
         return;
     }
     ip_renderHeaderTitle(groupId, container);
     ip_renderDays(groupId, container);
-    console.log(`?쇱젙 ?뚮뜑留??꾨즺: ${groupId}`);
-}
-function ip_getSortableIndex(evt, primaryKey, fallbackKey) {
-    const primaryValue = evt[primaryKey];
-    if (Number.isInteger(primaryValue)) return primaryValue;
-    const fallbackValue = evt[fallbackKey];
-    return Number.isInteger(fallbackValue) ? fallbackValue : null;
-}
-function ip_getDayIndexFromList(element) {
-    if (!element || !element.dataset) return null;
-    const dayIndex = parseInt(element.dataset.dayIndex, 10);
-    return Number.isInteger(dayIndex) ? dayIndex : null;
+    console.log(`일정 렌더링 완료: ${groupId}`);
 }
 function ip_renderHeaderTitle(groupId, container) {
     const itineraryData = quoteGroupsData[groupId].itineraryData;
@@ -1475,12 +1450,12 @@ function ip_renderHeaderTitle(groupId, container) {
     headerTitleSection.innerHTML = '';
     if (itineraryData.editingTitle) {
         const input = document.createElement('input'); input.type = 'text'; input.className = 'ip-header-title-input'; input.value = itineraryData.title;
-        const saveButton = document.createElement('button'); saveButton.className = 'icon-button'; saveButton.title = '?쒕ぉ ???; saveButton.innerHTML = ip_saveIconSVG; saveButton.addEventListener('click', () => ip_handleSaveTripTitle(groupId));
-        const cancelButton = document.createElement('button'); cancelButton.className = 'icon-button'; cancelButton.title = '痍⑥냼'; cancelButton.innerHTML = ip_cancelIconSVG; cancelButton.addEventListener('click', () => ip_handleCancelTripTitleEdit(groupId));
+        const saveButton = document.createElement('button'); saveButton.className = 'icon-button'; saveButton.title = '제목 저장'; saveButton.innerHTML = ip_saveIconSVG; saveButton.addEventListener('click', () => ip_handleSaveTripTitle(groupId));
+        const cancelButton = document.createElement('button'); cancelButton.className = 'icon-button'; cancelButton.title = '취소'; cancelButton.innerHTML = ip_cancelIconSVG; cancelButton.addEventListener('click', () => ip_handleCancelTripTitleEdit(groupId));
         headerTitleSection.append(input, saveButton, cancelButton); input.focus();
     } else {
         const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title;
-        const editButton = document.createElement('button'); editButton.className = 'icon-button ml-2'; editButton.title = '?ы뻾 ?쒕ぉ ?섏젙'; editButton.innerHTML = ip_editIconSVG; editButton.addEventListener('click', () => ip_handleEditTripTitle(groupId));
+        const editButton = document.createElement('button'); editButton.className = 'icon-button ml-2'; editButton.title = '여행 제목 수정'; editButton.innerHTML = ip_editIconSVG; editButton.addEventListener('click', () => ip_handleEditTripTitle(groupId));
         headerTitleSection.append(titleH1, editButton);
     }
 }
@@ -1494,78 +1469,17 @@ function ip_renderDays(groupId, container) {
         const expandedIcon = `<svg class="toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
         const collapsedIcon = `<svg class="toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
         let dateDisplayHTML = day.editingDate
-            ? `<input type="text" class="date-edit-input-text" value="${day.date}" placeholder="YYYY-MM-DD"><button class="save-date-button icon-button" title="?좎쭨 ???>${ip_saveIconSVG}</button><button class="cancel-date-edit-button icon-button" title="痍⑥냼">${ip_cancelIconSVG}</button>`
-            : `<h2 class="day-header-title">${ip_formatDate(day.date, dayIndex + 1)}</h2><button class="edit-date-button icon-button ml-2" title="?좎쭨 ?섏젙">${ip_editIconSVG}</button>`;
-        daySection.innerHTML = `<div class="ip-day-header-container day-header-container"><div class="ip-day-header-main">${dateDisplayHTML}</div><div class="ip-day-header-controls"><button class="delete-day-button icon-button" title="???좎쭨 ??젣">${ip_deleteIconSVG}</button><button class="day-toggle-button icon-button">${day.isCollapsed ? collapsedIcon : expandedIcon}</button></div></div><div class="day-content-wrapper ${day.isCollapsed ? 'hidden' : ''}"><div class="activities-list ip-activities-list pt-4" data-day-index="${dayIndex}"></div><button class="add-activity-button mt-4 ml-2 btn btn-sm btn-outline"><i class="fas fa-plus mr-1"></i>?쇱젙 異붽?</button></div>`;
+            ? `<input type="text" class="date-edit-input-text" value="${day.date}" placeholder="YYYY-MM-DD"><button class="save-date-button icon-button" title="날짜 저장">${ip_saveIconSVG}</button><button class="cancel-date-edit-button icon-button" title="취소">${ip_cancelIconSVG}</button>`
+            : `<h2 class="day-header-title">${ip_formatDate(day.date, dayIndex + 1)}</h2><button class="edit-date-button icon-button ml-2" title="날짜 수정">${ip_editIconSVG}</button>`;
+        daySection.innerHTML = `<div class="ip-day-header-container day-header-container"><div class="ip-day-header-main">${dateDisplayHTML}</div><div class="ip-day-header-controls"><button class="delete-day-button icon-button" title="이 날짜 삭제">${ip_deleteIconSVG}</button><button class="day-toggle-button icon-button">${day.isCollapsed ? collapsedIcon : expandedIcon}</button></div></div><div class="day-content-wrapper ${day.isCollapsed ? 'hidden' : ''}"><div class="activities-list ip-activities-list pt-4" data-day-index="${dayIndex}"></div><button class="add-activity-button mt-4 ml-2 btn btn-sm btn-outline"><i class="fas fa-plus mr-1"></i>일정 추가</button></div>`;
         daysContainer.appendChild(daySection);
         const activitiesList = daySection.querySelector('.activities-list');
         ip_renderActivities(activitiesList, day.activities, dayIndex, groupId);
     });
     if (typeof Sortable !== 'undefined') {
-        new Sortable(daysContainer, {
-            handle: '.ip-day-header-container',
-            draggable: '.ip-day-section',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            filter: 'a,button,input,textarea,select',
-            preventOnFilter: false,
-            onStart: () => {
-                console.log('[itinerary] day drag started', groupId);
-            },
-            onEnd: (evt) => {
-                const oldIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
-                const newIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
-                if (oldIndex === null || newIndex === null || oldIndex === newIndex) return;
-                const itineraryData = quoteGroupsData[groupId].itineraryData;
-                const movedDay = itineraryData.days.splice(oldIndex, 1)[0];
-                if (!movedDay) return;
-                itineraryData.days.splice(newIndex, 0, movedDay);
-                ip_recalculateAllDates(groupId);
-                ip_render(groupId);
-            }
-        });
-        daysContainer.querySelectorAll('.activities-list').forEach(list => {
-            new Sortable(list, {
-                group: `shared-activities-${groupId}`,
-                handle: '.ip-activity-card',
-                draggable: '.ip-activity-card',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                filter: 'a,button,input,textarea,select',
-                preventOnFilter: false,
-                onStart: () => {
-                    console.log('[itinerary] activity drag started', groupId);
-                },
-                onEnd: (evt) => {
-                    const fromDayIndex = ip_getDayIndexFromList(evt.from);
-                    const toDayIndex = ip_getDayIndexFromList(evt.to);
-                    const oldActivityIndex = ip_getSortableIndex(evt, 'oldDraggableIndex', 'oldIndex');
-                    const newActivityIndex = ip_getSortableIndex(evt, 'newDraggableIndex', 'newIndex');
-                    if (fromDayIndex === null || toDayIndex === null || oldActivityIndex === null || newActivityIndex === null) return;
-                    const itineraryData = quoteGroupsData[groupId].itineraryData;
-                    if (!itineraryData.days[fromDayIndex] || !itineraryData.days[toDayIndex]) return;
-                    const movedActivity = itineraryData.days[fromDayIndex].activities.splice(oldActivityIndex, 1)[0];
-                    if (!movedActivity) return;
-                    itineraryData.days[toDayIndex].activities.splice(newActivityIndex, 0, movedActivity);
-                    ip_render(groupId);
-                }
-            });
-        });
-    } else {
-        console.error('[itinerary] Sortable is undefined - drag-and-drop disabled');
+        new Sortable(daysContainer, { handle: '.day-header-container', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const itineraryData = quoteGroupsData[groupId].itineraryData; const movedDay = itineraryData.days.splice(evt.oldIndex, 1)[0]; itineraryData.days.splice(evt.newIndex, 0, movedDay); ip_recalculateAllDates(groupId); ip_render(groupId); } });
+        daysContainer.querySelectorAll('.activities-list').forEach(list => { new Sortable(list, { group: `shared-activities-${groupId}`, handle: '.ip-activity-card', animation: 150, ghostClass: 'sortable-ghost', onEnd: (evt) => { const fromDayIndex = parseInt(evt.from.dataset.dayIndex); const toDayIndex = parseInt(evt.to.dataset.dayIndex); const itineraryData = quoteGroupsData[groupId].itineraryData; const movedActivity = itineraryData.days[fromDayIndex].activities.splice(evt.oldIndex, 1)[0]; itineraryData.days[toDayIndex].activities.splice(evt.newIndex, 0, movedActivity); ip_render(groupId); } }); });
     }
-}
-
-function reinitializeItineraryDragAndDrop(rootElement) {
-    if (!rootElement) return;
-    const itineraryContainers = rootElement.querySelectorAll('[id^="itinerary-planner-container-"]');
-    itineraryContainers.forEach((container) => {
-        const groupId = container.id.replace('itinerary-planner-container-', '');
-        if (quoteGroupsData[groupId] && quoteGroupsData[groupId].itineraryData) {
-            ip_render(groupId);
-            console.log('[itinerary] drag and drop reinitialized:', groupId);
-        }
-    });
 }
 function ip_renderActivities(activitiesListElement, activities, dayIndex, groupId) {
     activitiesListElement.innerHTML = '';
@@ -1576,47 +1490,48 @@ function ip_renderActivities(activitiesListElement, activities, dayIndex, groupI
         const descHTML = activity.description ? `<div class="card-description">${activity.description.replace(/\n/g, '<br>')}</div>` : '';
         let locationText = activity.locationLink;
         if (locationText && locationText.length > 35) { locationText = locationText.substring(0, 32) + '...'; }
-        const locHTML = activity.locationLink ? `<div class="card-location">?뱧 <a href="${activity.locationLink}" target="_blank" title="${activity.locationLink}">${locationText}</a></div>` : '';
-        const costHTML = activity.cost ? `<div class="card-cost">?뮥 ${activity.cost}</div>` : '';
-        const notesHTML = activity.notes ? `<div class="card-notes">?뱷 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
-        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button card-action-icon-button sync-activity-from-db-button" title="愿愿묒? DB 理쒖떊 ?뺣낫濡???뼱?곌린">${ip_syncFromDbIconSVG}</button><button class="icon-button card-action-icon-button edit-activity-button" title="?섏젙">${ip_editIconSVG}</button><button class="icon-button card-action-icon-button duplicate-activity-button" title="蹂듭젣">${ip_duplicateIconSVG}</button><button class="icon-button card-action-icon-button delete-activity-button" title="??젣">${ip_deleteIconSVG}</button></div>`;
+        const locHTML = activity.locationLink ? `<div class="card-location">📍 <a href="${activity.locationLink}" target="_blank" title="${activity.locationLink}">${locationText}</a></div>` : '';
+        const costHTML = activity.cost ? `<div class="card-cost">💰 ${activity.cost}</div>` : '';
+        const notesHTML = activity.notes ? `<div class="card-notes">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
+        card.innerHTML = `<div class="card-time-icon-area"><div class="card-icon">${activity.icon||'&nbsp;'}</div><div class="card-time" data-time-value="${activity.time||''}">${ip_formatTimeToHHMM(activity.time)}</div></div><div class="card-details-area"><div class="card-title">${activity.title||''}</div>${descHTML}${imageHTML}${locHTML}${costHTML}${notesHTML}</div><div class="card-actions-direct"><button class="icon-button edit-activity-button" title="수정" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_editIconSVG}</button><button class="icon-button duplicate-activity-button" title="복제" disabled style="opacity: 0.3; cursor: not-allowed;">${ip_duplicateIconSVG}</button><button class="icon-button delete-activity-button" title="삭제">${ip_deleteIconSVG}</button></div>`;
         
-        // 카드 액션 버튼 이벤트를 카드 렌더 시점에 직접 바인딩
+        // 삭제 버튼만 직접 이벤트 바인딩 (강화된 버전)
         const deleteBtn = card.querySelector('.delete-activity-button');
-        const syncBtn = card.querySelector('.sync-activity-from-db-button');
-        const editBtn = card.querySelector('.edit-activity-button');
-        const duplicateBtn = card.querySelector('.duplicate-activity-button');
-
-        if (syncBtn) {
-            syncBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                ip_openSyncActivityFromDbModal(groupId, dayIndex, activityIndex);
-            });
-        }
-
-        if (editBtn) {
-            editBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                ip_openActivityModal(groupId, dayIndex, activityIndex);
-            });
-        }
-
-        if (duplicateBtn) {
-            duplicateBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                ip_handleDuplicateActivity(groupId, dayIndex, activityIndex);
-            });
-        }
-
+        
         if (deleteBtn) {
+            // 여러 방법으로 이벤트 바인딩
+            deleteBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('onclick 삭제 버튼 클릭됨');
+                if (confirm('이 일정을 삭제하시겠습니까?')) {
+                    console.log('삭제 확인됨, 삭제 진행');
+                    console.log('groupId:', groupId, 'dayIndex:', dayIndex, 'activityIndex:', activityIndex);
+                    ip_handleDeleteActivity(groupId, parseInt(dayIndex), parseInt(activityIndex));
+                }
+            };
+            
             deleteBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                ip_handleDeleteActivity(groupId, parseInt(dayIndex), parseInt(activityIndex));
+                console.log('addEventListener 삭제 버튼 클릭됨');
+                if (confirm('이 일정을 삭제하시겠습니까?')) {
+                    console.log('삭제 확인됨, 삭제 진행');
+                    console.log('groupId:', groupId, 'dayIndex:', dayIndex, 'activityIndex:', activityIndex);
+                    ip_handleDeleteActivity(groupId, parseInt(dayIndex), parseInt(activityIndex));
+                }
             });
+            
+            // 추가 속성으로도 설정
+            deleteBtn.setAttribute('onclick', `
+                event.preventDefault(); 
+                event.stopPropagation(); 
+                console.log('HTML onclick 삭제 버튼 클릭됨');
+                if (confirm('이 일정을 삭제하시겠습니까?')) {
+                    console.log('HTML onclick 삭제 진행');
+                    ip_handleDeleteActivity('${groupId}', ${dayIndex}, ${activityIndex});
+                }
+            `);
         }
         
         activitiesListElement.appendChild(card);
@@ -1629,11 +1544,11 @@ function ip_addDay(groupId) {
     itineraryData.days.push({ date: dateToYyyyMmDd(newDate), activities: [], isCollapsed: false, editingDate: false });
     ip_render(groupId);
 }
-function ip_handleDeleteActivity(groupId, dayIndex, activityIndex) { if (confirm('이 일정을 삭제하시겠습니까?')) { quoteGroupsData[groupId].itineraryData.days[dayIndex].activities.splice(activityIndex, 1); ip_render(groupId); } }
+function ip_handleDeleteActivity(groupId, dayIndex, activityIndex) { if (confirm("이 일정을 삭제하시겠습니까?")) { quoteGroupsData[groupId].itineraryData.days[dayIndex].activities.splice(activityIndex, 1); ip_render(groupId); } }
 function ip_handleDuplicateActivity(groupId, dayIndex, activityIndex) {
     const itineraryData = quoteGroupsData[groupId].itineraryData;
     const activityToDuplicate = itineraryData.days[dayIndex].activities[activityIndex];
-    if (activityToDuplicate) { const newActivity = JSON.parse(JSON.stringify(activityToDuplicate)); newActivity.id = ip_generateId(); newActivity.title = `${newActivity.title} (蹂듭궗蹂?`; itineraryData.days[dayIndex].activities.splice(activityIndex + 1, 0, newActivity); ip_render(groupId); }
+    if (activityToDuplicate) { const newActivity = JSON.parse(JSON.stringify(activityToDuplicate)); newActivity.id = ip_generateId(); newActivity.title = `${newActivity.title} (복사본)`; itineraryData.days[dayIndex].activities.splice(activityIndex + 1, 0, newActivity); ip_render(groupId); }
 }
 function ip_handleEditTripTitle(groupId) { quoteGroupsData[groupId].itineraryData.editingTitle = true; ip_render(groupId); }
 function ip_handleSaveTripTitle(groupId) { const container = document.getElementById(`itinerary-planner-container-${groupId}`); const input = container.querySelector(`#ip-headerTitleSection-${groupId} input`); quoteGroupsData[groupId].itineraryData.title = input.value; quoteGroupsData[groupId].itineraryData.editingTitle = false; ip_render(groupId); }
@@ -1645,7 +1560,7 @@ function ip_handleSaveDate(dayIndex, groupId, dateValue) {
         quoteGroupsData[groupId].itineraryData.days[dayIndex].date = validatedDate;
         quoteGroupsData[groupId].itineraryData.days[dayIndex].editingDate = false;
         ip_recalculateAllDates(groupId); ip_render(groupId);
-    } else { showToastMessage("?섎せ???좎쭨 ?뺤떇?낅땲?? (YYYY-MM-DD)", true); }
+    } else { showToastMessage("잘못된 날짜 형식입니다. (YYYY-MM-DD)", true); }
 }
 function ip_handleCancelDateEdit(dayIndex, groupId) { quoteGroupsData[groupId].itineraryData.days[dayIndex].editingDate = false; ip_render(groupId); }
 function ip_handleToggleDayCollapse(event, dayIndex, groupId) {
@@ -1656,191 +1571,16 @@ function ip_handleActivityDoubleClick(event, groupId) {
     if (card) { ip_openActivityModal(groupId, parseInt(card.dataset.dayIndex), parseInt(card.dataset.activityIndex)); }
 }
 
-function ip_resetPendingAddActivityState() {
-    ipPendingNewActivityGroupId = null;
-    ipPendingNewActivityDayIndex = null;
-    ipPendingSyncActivityIndex = null;
-}
-
-function ip_openAddActivityChoiceModal(groupId, dayIndex) {
-    ipPendingNewActivityGroupId = groupId;
-    ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
-    ipPendingSyncActivityIndex = null;
-    const modal = document.getElementById('ipAddActivityChoiceModal');
-    if (modal) modal.classList.remove('hidden');
-}
-
-function ip_closeAddActivityChoiceModal() {
-    const modal = document.getElementById('ipAddActivityChoiceModal');
-    if (modal) modal.classList.add('hidden');
-}
-
-function ip_openBlankActivityModal(groupId, dayIndex) {
-    ip_openActivityModal(groupId, dayIndex, -1);
-}
-
-function ip_openSyncActivityFromDbModal(groupId, dayIndex, activityIndex) {
-    ipPendingNewActivityGroupId = groupId;
-    ipPendingNewActivityDayIndex = parseInt(dayIndex, 10);
-    ipPendingSyncActivityIndex = parseInt(activityIndex, 10);
-    ip_loadAttractionListFromFirestore();
-}
-
-function ip_closeLoadAttractionModal() {
-    const modal = document.getElementById('ipLoadAttractionModal');
-    if (modal) modal.classList.add('hidden');
-}
-
-function ip_addActivityFromAttraction(attraction) {
-    const groupId = ipPendingNewActivityGroupId;
-    const dayIndex = ipPendingNewActivityDayIndex;
-    if (!groupId || !Number.isInteger(dayIndex)) {
-        showToastMessage('?쇱젙??異붽???????좎쭨瑜?李얠쓣 ???놁뒿?덈떎.', true);
-        return;
-    }
-    const day = quoteGroupsData[groupId]?.itineraryData?.days?.[dayIndex];
-    if (!day) {
-        showToastMessage('?좏깮???좎쭨 ?뺣낫瑜?李얠쓣 ???놁뒿?덈떎.', true);
-        ip_resetPendingAddActivityState();
-        return;
-    }
-
-    if (Number.isInteger(ipPendingSyncActivityIndex)) {
-        const targetActivity = day.activities[ipPendingSyncActivityIndex];
-        if (!targetActivity) {
-            showToastMessage('?숆린?뷀븷 湲곗〈 ?쇱젙??李얠? 紐삵뻽?듬땲??', true);
-            ip_resetPendingAddActivityState();
-            return;
-        }
-
-        targetActivity.icon = attraction.icon || '';
-        targetActivity.title = attraction.title || '';
-        targetActivity.description = attraction.description || '';
-        targetActivity.locationLink = attraction.locationLink || attraction.location || '';
-        targetActivity.imageUrl = attraction.imageUrl || '';
-        targetActivity.cost = attraction.cost || '';
-        targetActivity.notes = attraction.notes || '';
-
-        ip_render(groupId);
-        ip_closeLoadAttractionModal();
-        showToastMessage(`DAY ${dayIndex + 1} ?쇱젙??"${attraction.title || '愿愿묒? ?뺣낫'}"濡??숆린?뷀뻽?듬땲??`);
-        ip_resetPendingAddActivityState();
-        return;
-    }
-
-    day.activities.push({
-        id: ip_generateId(),
-        time: '',
-        icon: attraction.icon || '',
-        title: attraction.title || '',
-        description: attraction.description || '',
-        locationLink: attraction.locationLink || attraction.location || '',
-        imageUrl: attraction.imageUrl || '',
-        cost: attraction.cost || '',
-        notes: attraction.notes || ''
-    });
-
-    ip_render(groupId);
-    showToastMessage(`"${attraction.title || '???쇱젙'}" ??ぉ??DAY ${dayIndex + 1}??異붽??덉뒿?덈떎.`);
-}
-
-function ip_renderFilteredAttractionList() {
-    const listEl = document.getElementById('ipAttractionList');
-    const searchInput = document.getElementById('ipAttractionSearchInput');
-    const loadingMsg = document.getElementById('ipLoadingAttractionMsg');
-    if (!listEl || !searchInput) return;
-
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    listEl.innerHTML = '';
-
-    const filteredAttractions = ipAllFetchedAttractions.filter((attraction) =>
-        (attraction.title || '').toLowerCase().includes(searchTerm)
-    );
-
-    if (filteredAttractions.length === 0) {
-        const isLoading = loadingMsg && loadingMsg.style.display !== 'none';
-        if (!isLoading) {
-            if (searchTerm) {
-                listEl.innerHTML = `<li class="p-2 text-gray-500">"${searchTerm}" 寃??寃곌낵媛 ?놁뒿?덈떎.</li>`;
-            } else {
-                listEl.innerHTML = '<li class="p-2 text-gray-500">?깅줉??愿愿묒? ?곗씠?곌? ?놁뒿?덈떎.</li>';
-            }
-        }
-        return;
-    }
-
-    filteredAttractions.forEach((attraction) => {
-        const li = document.createElement('li');
-        li.className = 'p-3 hover:bg-gray-100 cursor-pointer';
-        li.innerHTML = `
-            <div class="font-medium flex items-center gap-2">
-                <span>${attraction.icon || ''}</span>
-                <span>${attraction.title || '(?쒕ぉ ?놁쓬)'}</span>
-            </div>
-            ${attraction.description ? `<div class="text-xs text-gray-500 mt-1">${attraction.description}</div>` : ''}
-        `;
-        li.addEventListener('click', () => ip_addActivityFromAttraction(attraction));
-        listEl.appendChild(li);
-    });
-}
-
-async function ip_loadAttractionListFromFirestore() {
-    const modal = document.getElementById('ipLoadAttractionModal');
-    const listEl = document.getElementById('ipAttractionList');
-    const loadingMsg = document.getElementById('ipLoadingAttractionMsg');
-    const searchInput = document.getElementById('ipAttractionSearchInput');
-    if (!modal || !listEl || !loadingMsg || !searchInput) {
-        showToastMessage('愿愿묒? DB 遺덈윭?ㅺ린 UI瑜?李얠쓣 ???놁뒿?덈떎.', true);
-        return;
-    }
-
-    modal.classList.remove('hidden');
-    loadingMsg.style.display = 'block';
-    listEl.innerHTML = '';
-    searchInput.value = '';
-    ipAllFetchedAttractions = [];
-
-    try {
-        const querySnapshot = await ipDb.collection('attractions').orderBy('title').get();
-        querySnapshot.forEach((doc) => {
-            ipAllFetchedAttractions.push({ id: doc.id, ...doc.data() });
-        });
-    } catch (error) {
-        console.error('[itinerary] 愿愿묒? 紐⑸줉 濡쒕뱶 ?ㅽ뙣:', error);
-        showToastMessage('愿愿묒? DB 紐⑸줉 遺덈윭?ㅺ린 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.', true);
-    } finally {
-        loadingMsg.style.display = 'none';
-        ip_renderFilteredAttractionList();
-    }
-}
-
 function ip_openActivityModal(groupId, dayIndex, activityIndex = -1) {
     const modal = document.getElementById('ipActivityModal'); const form = document.getElementById('ipActivityForm');
-    modal.querySelector('#ipModalTitle').textContent = activityIndex > -1 ? '?쇱젙 ?섏젙' : '???쇱젙 異붽?';
+    modal.querySelector('#ipModalTitle').textContent = activityIndex > -1 ? '일정 수정' : '새 일정 추가';
     form.reset();
     form.querySelector('#ipActivityDayIndex').value = dayIndex; form.querySelector('#ipActivityIndex').value = activityIndex; form.querySelector('#ipGroupId').value = groupId;
     const activityIconSelect = document.getElementById('ipActivityIconSelect');
     activityIconSelect.innerHTML = ip_travelEmojis.map(emoji => `<option value="${emoji.value}">${emoji.display}</option>`).join('');
     if (activityIndex > -1) {
         const activity = quoteGroupsData[groupId].itineraryData.days[dayIndex].activities[activityIndex];
-        if (!activity) {
-            showToastMessage('?섏젙???쇱젙 ?곗씠?곕? 李얠쓣 ???놁뒿?덈떎.', true);
-            return;
-        }
-
-        const setValue = (selector, value) => {
-            const field = form.querySelector(selector);
-            if (field) field.value = value ?? '';
-        };
-
-        setValue('#ipActivityTimeInput', activity.time);
-        setValue('#ipActivityTitle', activity.title);
-        setValue('#ipActivityDescription', activity.description);
-        setValue('#ipActivityLocation', activity.locationLink);
-        setValue('#ipActivityImageUrl', activity.imageUrl);
-        setValue('#ipActivityCost', activity.cost);
-        setValue('#ipActivityNotes', activity.notes);
-        activityIconSelect.value = activity.icon ?? '';
+        Object.keys(activity).forEach(key => { const input = form.querySelector(`#ipActivity${key.charAt(0).toUpperCase() + key.slice(1)}`); if (input) input.value = activity[key] || ''; });
     }
     modal.classList.remove('hidden');
 }
@@ -1848,7 +1588,7 @@ function ip_handleActivityFormSubmit(event) {
     event.preventDefault(); const form = event.target;
     const groupId = form.querySelector('#ipGroupId').value; const dayIndex = parseInt(form.querySelector('#ipActivityDayIndex').value); const activityIndex = parseInt(form.querySelector('#ipActivityIndex').value);
     let timeValue = form.querySelector('#ipActivityTimeInput').value.trim();
-    if (timeValue && (timeValue.length !== 4 || !/^\d{4}$/.test(timeValue))) { showToastMessage("?쒓컙? HHMM ?뺤떇??4?먮━ ?レ옄濡??낅젰?섏꽭??", true); return; }
+    if (timeValue && (timeValue.length !== 4 || !/^\d{4}$/.test(timeValue))) { showToastMessage("시간은 HHMM 형식의 4자리 숫자로 입력하세요.", true); return; }
     const itineraryData = quoteGroupsData[groupId].itineraryData;
     const activityData = {
         id: (activityIndex > -1 ? itineraryData.days[dayIndex].activities[activityIndex].id : ip_generateId()),
@@ -1862,7 +1602,7 @@ function ip_handleActivityFormSubmit(event) {
 }
 function ip_showConfirmDeleteDayModal(dayIndex, groupId) {
     const modal = document.getElementById('ipConfirmDeleteDayModal');
-    modal.querySelector('#ipConfirmDeleteDayMessage').textContent = `DAY ${dayIndex + 1} ?쇱젙???뺣쭚 ??젣?섏떆寃좎뒿?덇퉴?`;
+    modal.querySelector('#ipConfirmDeleteDayMessage').textContent = `DAY ${dayIndex + 1} 일정을 정말 삭제하시겠습니까?`;
     modal.classList.remove('hidden');
     const confirmBtn = document.getElementById('ipConfirmDeleteDayActionButton');
     const newConfirmBtn = confirmBtn.cloneNode(true);
@@ -1884,29 +1624,29 @@ async function ip_handleCopyInlineHtml(groupId) {
         await navigator.clipboard.write([
             new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobText })
         ]);
-        showToastMessage('?쇱젙??HTML???대┰蹂대뱶??蹂듭궗?섏뿀?듬땲??');
+        showToastMessage('일정표 HTML이 클립보드에 복사되었습니다.');
     } catch (err) {
-        console.error("HTML 蹂듭궗 ?ㅽ뙣, ?띿뒪?몃줈 ?ъ떆??", err);
+        console.error("HTML 복사 실패, 텍스트로 재시도:", err);
         try {
             await navigator.clipboard.writeText(html);
-            showToastMessage('?쇱젙??肄붾뱶媛 ?띿뒪?몃줈 蹂듭궗?섏뿀?듬땲??(HTML ?뺤떇 蹂듭궗 ?ㅽ뙣).');
+            showToastMessage('일정표 코드가 텍스트로 복사되었습니다 (HTML 형식 복사 실패).');
         } catch (fallbackErr) {
-            showToastMessage('?대┰蹂대뱶 蹂듭궗??理쒖쥌?곸쑝濡??ㅽ뙣?덉뒿?덈떎.', true);
+            showToastMessage('클립보드 복사에 최종적으로 실패했습니다.', true);
         }
     }
 }
 function ip_handleInlinePreview(groupId) {
     const html = ip_generateInlineStyledHTML(quoteGroupsData[groupId].itineraryData, { includeStyles: true });
     const previewWindow = window.open('', '_blank');
-    if (previewWindow) { previewWindow.document.write(html); previewWindow.document.close(); } else { showToastMessage("?앹뾽??李⑤떒?섏뿀?듬땲??", true); }
+    if (previewWindow) { previewWindow.document.write(html); previewWindow.document.close(); } else { showToastMessage("팝업이 차단되었습니다.", true); }
 }
 
 /**
- * [?섏젙?? ?쇱젙??HTML ?앹꽦 ?⑥닔
- * ?꾩쟾??HTML 臾몄꽌媛 ?꾨땶, .txt ?뚯씪 湲곗???<main>...</main> HTML 議곌컖(fragment)???앹꽦?섎룄濡?蹂寃?
- * @param {object} itineraryData - ?쇱젙???곗씠??
- * @param {object} options - ?듭뀡 (?꾩옱 ?ъ슜?섏? ?딆쓬)
- * @returns {string} - <main> 湲곕컲 HTML 議곌컖
+ * [수정됨] 일정표 HTML 생성 함수
+ * 완전한 HTML 문서가 아닌, .txt 파일 기준의 <main>...</main> HTML 조각(fragment)을 생성하도록 변경
+ * @param {object} itineraryData - 일정표 데이터
+ * @param {object} options - 옵션 (현재 사용되지 않음)
+ * @returns {string} - <main> 기반 HTML 조각
  */
 function ip_generateInlineStyledHTML(itineraryData, options = {}) {
     let daysHTML = '';
@@ -1914,20 +1654,20 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
         let activitiesHTML = (day.activities || []).map(activity => {
             const imageHTML = activity.imageUrl ? `
               <details open style="margin-top:8px;">
-                <summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">?뼹截??ъ쭊</summary>
+                <summary style="font-size:12px;color:#007bff;cursor:pointer;display:inline-block;">🖼️ 사진</summary>
                 <img src="${activity.imageUrl}" alt="${activity.title}" style="max-width: 100%; height:auto;border-radius:4px;margin-top:8px;" onerror="this.style.display='none';">
               </details>` : '';
             
-            const locationHTML = activity.locationLink ? `<div style="font-size:12px;margin-top:4px;">?뱧 <a href="${activity.locationLink}" target="_blank" rel="noopener noreferrer" style="color:#007bff;text-decoration:none;">?꾩튂 蹂닿린</a></div>` : '';
-            const costHTML = activity.cost ? `<div style="font-size:12px;margin-top:4px;">?뮥 ${activity.cost}</div>` : '';
-            const notesHTML = activity.notes ? `<div style="font-size:12px;margin-top:4px;white-space:pre-wrap;">?뱷 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
+            const locationHTML = activity.locationLink ? `<div style="font-size:12px;margin-top:4px;">📍 <a href="${activity.locationLink}" target="_blank" rel="noopener noreferrer" style="color:#007bff;text-decoration:none;">위치 보기</a></div>` : '';
+            const costHTML = activity.cost ? `<div style="font-size:12px;margin-top:4px;">💰 ${activity.cost}</div>` : '';
+            const notesHTML = activity.notes ? `<div style="font-size:12px;margin-top:4px;white-space:pre-wrap;">📝 ${activity.notes.replace(/\n/g, '<br>')}</div>` : '';
             const descHTML = activity.description ? `<div style="font-size:12px;white-space:pre-wrap;">${activity.description.replace(/\n/g, '<br>')}</div>` : '';
             
             return `
           <div style="background-color:white;border-radius:8px;border:1px solid #E0E0E0;padding:10px;margin-bottom:10px;display:flex; align-items: flex-start;">
             <div style="width:50px;flex-shrink:0;margin-right:10px;">
-              <div style="font-size:20px;margin-bottom:4px;">${activity.icon || '혻'}</div>
-              <div style="font-size:12px;font-weight:bold;white-space:nowrap;">${ip_formatTimeToHHMM(activity.time) || '혻'}</div>
+              <div style="font-size:20px;margin-bottom:4px;">${activity.icon || ' '}</div>
+              <div style="font-size:12px;font-weight:bold;white-space:nowrap;">${ip_formatTimeToHHMM(activity.time) || ' '}</div>
             </div>
             <div style="flex-grow:1; overflow: hidden;">
               <div style="font-size:13px;font-weight:bold;">${activity.title || ''}</div>
@@ -1946,17 +1686,17 @@ function ip_generateInlineStyledHTML(itineraryData, options = {}) {
         <h2 style="font-size: 14px; font-weight: 600; margin:0;">${ip_formatDate(day.date, dayIndex + 1)}</h2>
       </summary>
       <div style="padding: 5px;"> <div style="padding-top: 0.5rem;">
-          ${activitiesHTML || '<p style="font-size:12px;color:#777;">?쇱젙???놁뒿?덈떎.</p>'}
+          ${activitiesHTML || '<p style="font-size:12px;color:#777;">일정이 없습니다.</p>'}
         </div>
       </div>
     </details>
   </div>`;
     });
 
-    // .txt ?뚯씪 ?뺤떇??留욎떠 <main>怨?<header> ?쒓렇濡?媛먯떥吏?HTML 議곌컖??諛섑솚?⑸땲??
-    // [?섏젙] main ?쒓렇??padding: 0 16px -> 0 ?쇰줈 蹂寃쏀븯???꾩껜 而⑦뀒?대꼫 ?щ갚 ?쒓굅
+    // .txt 파일 형식에 맞춰 <main>과 <header> 태그로 감싸진 HTML 조각을 반환합니다.
+    // [수정] main 태그의 padding: 0 16px -> 0 으로 변경하여 전체 컨테이너 여백 제거
     return `
-<main style="max-width: 750px; margin: auto; padding: 0; font-family: 'Malgun Gothic', '留묒? 怨좊뵓', sans-serif;">
+<main style="max-width: 750px; margin: auto; padding: 0; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;">
   <header style="padding-top: 15px;"> <h1 style="font-size: 24px; font-weight: bold;">${itineraryData.title}</h1>
   </header>
   ${daysHTML}
@@ -1988,13 +1728,13 @@ async function ip_openLoadTripModal(groupId) {
         loadingMsg.style.display = 'none';
         
         const renderList = (sets) => {
-            listEl.innerHTML = sets.length ? '' : '<li class="p-3 text-center text-gray-500">?쒗뵆由우씠 ?놁뒿?덈떎.</li>';
+            listEl.innerHTML = sets.length ? '' : '<li class="p-3 text-center text-gray-500">템플릿이 없습니다.</li>';
             sets.forEach(template => {
                 const li = document.createElement('li');
                 li.className = 'p-3 hover:bg-gray-100 cursor-pointer';
                 li.textContent = template.title;
                 li.onclick = () => {
-                    if (confirm(`'${template.title}' ?쇱젙???꾩옱 寃ъ쟻??遺덈윭?ㅼ떆寃좎뒿?덇퉴?\n(湲곗〈 ?쇱젙? 紐⑤몢 援먯껜?⑸땲??)`)) {
+                    if (confirm(`'${template.title}' 일정을 현재 견적에 불러오시겠습니까?\n(기존 일정은 모두 교체됩니다.)`)) {
                         ip_loadTripFromFirestore(template.id, groupId);
                         modal.classList.add('hidden');
                     }
@@ -2006,7 +1746,7 @@ async function ip_openLoadTripModal(groupId) {
         searchInput.oninput = () => renderList(templates.filter(t => t.title.toLowerCase().includes(searchInput.value.toLowerCase())));
         renderList(templates);
 
-    } catch (error) { loadingMsg.textContent = "?쒗뵆由?紐⑸줉 濡쒕뵫 ?ㅽ뙣"; showToastMessage("?쒗뵆由?濡쒕뵫 以??ㅻ쪟 諛쒖깮", true); }
+    } catch (error) { loadingMsg.textContent = "템플릿 목록 로딩 실패"; showToastMessage("템플릿 로딩 중 오류 발생", true); }
 }
 async function ip_loadTripFromFirestore(tripId, groupId) {
     try {
@@ -2014,23 +1754,23 @@ async function ip_loadTripFromFirestore(tripId, groupId) {
         if (doc.exists) {
             const loadedData = doc.data();
             quoteGroupsData[groupId].itineraryData = {
-                title: loadedData.title || "?쒕ぉ ?놁쓬",
+                title: loadedData.title || "제목 없음",
                 days: (loadedData.days || []).map((day, index) => ({...day, editingDate: false, isCollapsed: index !== 0 })),
                 editingTitle: false
             };
-            showToastMessage(`'${loadedData.title}' ?쇱젙??遺덈윭?붿뒿?덈떎.`);
+            showToastMessage(`'${loadedData.title}' 일정을 불러왔습니다.`);
             ip_render(groupId);
             
-            // ?쇱젙 遺덈윭?????대깽??由ъ뒪???щ컮?몃뵫
-            console.log('?쇱젙 濡쒕뵫 ???대깽??由ъ뒪???щ컮?몃뵫 以?..');
+            // 일정 불러온 후 이벤트 리스너 재바인딩
+            console.log('일정 로딩 후 이벤트 리스너 재바인딩 중...');
             rebindWorkspaceEventListeners();
-            console.log('?쇱젙 濡쒕뵫 ???대깽??由ъ뒪???щ컮?몃뵫 ?꾨즺');
-        } else { showToastMessage("?좏깮???쇱젙??李얠쓣 ???놁뒿?덈떎.", true); }
-    } catch(error) { showToastMessage("?쇱젙 遺덈윭?ㅺ린 以??ㅻ쪟 諛쒖깮", true); console.error(error); }
+            console.log('일정 로딩 후 이벤트 리스너 재바인딩 완료');
+        } else { showToastMessage("선택한 일정을 찾을 수 없습니다.", true); }
+    } catch(error) { showToastMessage("일정 불러오기 중 오류 발생", true); console.error(error); }
 }
 
 // =======================================================================
-// 6. ?듭떖 湲곕뒫 ?⑥닔 (硫붿씤 ???⑥닔??
+// 6. 핵심 기능 함수 (메인 앱 함수들)
 // =======================================================================
 function createCustomerCard(initialData = { name: '', phone: '', email: '' }) {
     const container = document.getElementById('customerInfoContainer');
@@ -2039,7 +1779,7 @@ function createCustomerCard(initialData = { name: '', phone: '', email: '' }) {
     const card = document.createElement('div');
     card.className = 'p-4 border border-gray-200 rounded-lg relative flex-grow sm:flex-grow-0 sm:min-w-[300px]';
     card.id = cardId;
-    card.innerHTML = `<button type="button" class="absolute top-1 right-1 text-gray-400 hover:text-red-500 text-xs remove-customer-btn p-1" title="怨좉컼 ??젣"><i class="fas fa-times"></i></button><div class="space-y-3 text-sm"><div class="flex items-center gap-2"><label for="customerName_${cardId}" class="font-medium text-gray-800 w-12 text-left flex-shrink-0">怨좉컼紐?/label><input type="text" id="customerName_${cardId}" class="w-full flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-field="name" value="${initialData.name}"><button type="button" class="inline-copy-btn copy-customer-info-btn" title="怨좉컼紐?蹂듭궗"><i class="far fa-copy"></i></button></div><div class="flex items-center gap-2"><label for="customerPhone_${cardId}" class="font-medium text-gray-800 w-12 text-left flex-shrink-0">?곕씫泥?/label><input type="tel" id="customerPhone_${cardId}" class="w-full flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-field="phone" value="${initialData.phone}"><button type="button" class="inline-copy-btn copy-customer-info-btn" title="?곕씫泥?蹂듭궗"><i class="far fa-copy"></i></button></div><div class="flex items-center gap-2"><label for="customerEmail_${cardId}" class="font-medium text-gray-800 w-12 text-left flex-shrink-0">?대찓??/label><input type="email" id="customerEmail_${cardId}" class="w-full flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-field="email" value="${initialData.email}"><button type="button" class="inline-copy-btn copy-customer-info-btn" title="?대찓??蹂듭궗"><i class="far fa-copy"></i></button></div></div>`;
+    card.innerHTML = `<button type="button" class="absolute top-1 right-1 text-gray-400 hover:text-red-500 text-xs remove-customer-btn p-1" title="고객 삭제"><i class="fas fa-times"></i></button><div class="space-y-3 text-sm"><div class="flex items-center gap-2"><label for="customerName_${cardId}" class="font-medium text-gray-800 w-12 text-left flex-shrink-0">고객명</label><input type="text" id="customerName_${cardId}" class="w-full flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-field="name" value="${initialData.name}"><button type="button" class="inline-copy-btn copy-customer-info-btn" title="고객명 복사"><i class="far fa-copy"></i></button></div><div class="flex items-center gap-2"><label for="customerPhone_${cardId}" class="font-medium text-gray-800 w-12 text-left flex-shrink-0">연락처</label><input type="tel" id="customerPhone_${cardId}" class="w-full flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-field="phone" value="${initialData.phone}"><button type="button" class="inline-copy-btn copy-customer-info-btn" title="연락처 복사"><i class="far fa-copy"></i></button></div><div class="flex items-center gap-2"><label for="customerEmail_${cardId}" class="font-medium text-gray-800 w-12 text-left flex-shrink-0">이메일</label><input type="email" id="customerEmail_${cardId}" class="w-full flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-field="email" value="${initialData.email}"><button type="button" class="inline-copy-btn copy-customer-info-btn" title="이메일 복사"><i class="far fa-copy"></i></button></div></div>`;
     container.appendChild(card);
 }
 function getCustomerData() {
@@ -2071,18 +1811,18 @@ const evaluateMath = (expression) => {
         return parseFloat(s) || 0; 
     } 
 };
-const formatCurrency = (amount) => new Intl.NumberFormat('ko-KR').format(Math.round(amount)) + ' ??;
+const formatCurrency = (amount) => new Intl.NumberFormat('ko-KR').format(Math.round(amount)) + ' 원';
 const formatPercentage = (value) => (isNaN(value) || !isFinite(value) ? 0 : value * 100).toFixed(2) + ' %';
 const copyHtmlToClipboard = (htmlString) => {
-    if (!htmlString || htmlString.trim() === "") { showToastMessage('蹂듭궗???댁슜???놁뒿?덈떎.', true); return; }
-    navigator.clipboard.writeText(htmlString).then(() => showToastMessage('HTML ?뚯뒪 肄붾뱶媛 ?대┰蹂대뱶??蹂듭궗?섏뿀?듬땲??'))
-    .catch(err => { console.error('?대┰蹂대뱶 蹂듭궗 ?ㅽ뙣:', err); showToastMessage('蹂듭궗???ㅽ뙣?덉뒿?덈떎.', true); });
+    if (!htmlString || htmlString.trim() === "") { showToastMessage('복사할 내용이 없습니다.', true); return; }
+    navigator.clipboard.writeText(htmlString).then(() => showToastMessage('HTML 소스 코드가 클립보드에 복사되었습니다.'))
+    .catch(err => { console.error('클립보드 복사 실패:', err); showToastMessage('복사에 실패했습니다.', true); });
 };
-function copyToClipboard(text, fieldName = '?띿뒪??) {
-    if (!text || text.trim() === "") { showToastMessage('蹂듭궗???댁슜???놁뒿?덈떎.', true); return; }
+function copyToClipboard(text, fieldName = '텍스트') {
+    if (!text || text.trim() === "") { showToastMessage('복사할 내용이 없습니다.', true); return; }
     navigator.clipboard.writeText(text).then(() => {
-        showToastMessage(`'${text}' (${fieldName}) ?대┰蹂대뱶??蹂듭궗?섏뿀?듬땲??`);
-    }).catch(err => { console.error('?대┰蹂대뱶 蹂듭궗 ?ㅽ뙣:', err); showToastMessage('蹂듭궗???ㅽ뙣?덉뒿?덈떎.', true); });
+        showToastMessage(`'${text}' (${fieldName}) 클립보드에 복사되었습니다.`);
+    }).catch(err => { console.error('클립보드 복사 실패:', err); showToastMessage('복사에 실패했습니다.', true); });
 }
 function showToastMessage(message, isError = false) {
     const toastContainer = document.getElementById('toast-container');
@@ -2110,7 +1850,7 @@ function syncGroupUIToData(groupId) {
     if (!groupEl) return;
     const groupData = quoteGroupsData[groupId];
 
-    // 怨꾩궛湲??곗씠???숆린??
+    // 계산기 데이터 동기화
     groupEl.querySelectorAll('.calculator-instance').forEach(instance => {
         const calcId = instance.dataset.calculatorId;
         const calculatorData = groupData.calculators.find(c => c.id === calcId);
@@ -2144,14 +1884,14 @@ function syncGroupUIToData(groupId) {
         }
     });
     
-    // ??났 ?ㅼ?以??곗씠???숆린??
+    // 항공 스케줄 데이터 동기화
     const flightScheduleContainer = groupEl.querySelector('.flight-schedule-container');
     if (flightScheduleContainer) {
         groupData.flightSchedule = [];
         flightScheduleContainer.querySelectorAll('.flight-schedule-subgroup').forEach(subgroupEl => {
             const newSubgroupData = {
                 id: subgroupEl.id,
-                title: subgroupEl.querySelector('input[placeholder="??났??]').value,
+                title: subgroupEl.querySelector('input[placeholder="항공사"]').value,
                 rows: []
             };
             subgroupEl.querySelectorAll('tbody tr').forEach(rowEl => {
@@ -2165,7 +1905,7 @@ function syncGroupUIToData(groupId) {
         });
     }
 
-    // ?붽툑 ?덈궡 ?곗씠???숆린??
+    // 요금 안내 데이터 동기화
     const priceInfoContainer = groupEl.querySelector('.price-info-container');
     if (priceInfoContainer) {
         groupData.priceInfo = [];
@@ -2186,13 +1926,13 @@ function syncGroupUIToData(groupId) {
         });
     }
 
-    // ?ы븿/遺덊룷???곗씠???숆린??
+    // 포함/불포함 데이터 동기화
     const inclusionTextEl = groupEl.querySelector('.inclusion-text');
     if (inclusionTextEl) groupData.inclusionText = inclusionTextEl.value;
     const exclusionTextEl = groupEl.querySelector('.exclusion-text');
     if (exclusionTextEl) groupData.exclusionText = exclusionTextEl.value;
 
-    // ?명뀛 硫붿씠而??숆린??
+    // 호텔 메이커 동기화
     hm_syncCurrentHotelData(groupId);
 }
 
@@ -2223,8 +1963,8 @@ async function getSaveDataBlob() {
         if (dataScriptTag) { dataScriptTag.textContent = JSON.stringify(allData); }
         return new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
     } catch (error) {
-        console.error("CSS ?먮뒗 JS ?뚯씪???ы븿?섎뒗 以??ㅻ쪟 諛쒖깮:", error);
-        showToastMessage("???以鍮?以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?몃? ?뚯씪???쎌쓣 ???놁뒿?덈떎.", true);
+        console.error("CSS 또는 JS 파일을 포함하는 중 오류 발생:", error);
+        showToastMessage("저장 준비 중 오류가 발생했습니다. 외부 파일을 읽을 수 없습니다.", true);
         return null;
     }
 }
@@ -2234,39 +1974,39 @@ async function saveFile(isSaveAs = false, clickedButton = null) {
     const originalBtnHTML = clickedButton ? clickedButton.innerHTML : '';
     saveBtn.disabled = true;
     saveAsBtn.disabled = true;
-    if (clickedButton) { clickedButton.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>???以?..`; }
+    if (clickedButton) { clickedButton.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>저장 중...`; }
     try {
         const blob = await getSaveDataBlob();
-        if (!blob) throw new Error("Blob ?앹꽦 ?ㅽ뙣");
+        if (!blob) throw new Error("Blob 생성 실패");
         
-        // ?꾩옱 ?몄뀡???뚯씪 ?몃뱾 ?ъ슜
+        // 현재 세션의 파일 핸들 사용
         const currentSession = getCurrentSession();
         const sessionFileHandle = currentSession ? currentSession.fileHandle : currentFileHandle;
         
         if (isSaveAs || !sessionFileHandle) {
-            // ?꾩옱 ?뚯씪紐?媛?몄삤湲?
+            // 현재 파일명 가져오기
             let suggestedFileName;
             if (sessionFileHandle && sessionFileHandle.name) {
-                // 湲곗〈 ?뚯씪???덉쑝硫?洹??대쫫 ?ъ슜
+                // 기존 파일이 있으면 그 이름 사용
                 suggestedFileName = sessionFileHandle.name;
-            } else if (currentSession && currentSession.displayName && currentSession.displayName !== '??寃ъ쟻??) {
-                // ?몄뀡???쒖떆紐낆씠 ?덉쑝硫??ъ슜
+            } else if (currentSession && currentSession.displayName && currentSession.displayName !== '새 견적서') {
+                // 세션에 표시명이 있으면 사용
                 suggestedFileName = currentSession.displayName.endsWith('.html') ? 
                     currentSession.displayName : `${currentSession.displayName}.html`;
             } else {
-                // 湲곕낯媛?
-                suggestedFileName = `寃ъ쟻??${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.html`;
+                // 기본값
+                suggestedFileName = `견적서_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.html`;
             }
             
             const newHandle = await window.showSaveFilePicker({
                 suggestedName: suggestedFileName,
-                types: [{ description: 'HTML ?뚯씪', accept: { 'text/html': ['.html'] } }]
+                types: [{ description: 'HTML 파일', accept: { 'text/html': ['.html'] } }]
             });
             const writableStream = await newHandle.createWritable();
             await writableStream.write(blob);
             await writableStream.close();
             
-            // ?몄뀡怨??꾩뿭 ?몃뱾 紐⑤몢 ?낅뜲?댄듃
+            // 세션과 전역 핸들 모두 업데이트
             if (currentSession) {
                 currentSession.fileHandle = newHandle;
                 currentSession.displayName = newHandle.name;
@@ -2274,17 +2014,17 @@ async function saveFile(isSaveAs = false, clickedButton = null) {
             }
             currentFileHandle = newHandle;
             document.title = newHandle.name;
-            showToastMessage('?뚯씪???깃났?곸쑝濡???λ릺?덉뒿?덈떎.');
+            showToastMessage('파일이 성공적으로 저장되었습니다.');
             await saveFileHandle(newHandle.name, newHandle);
         } else {
             const writableStream = await sessionFileHandle.createWritable();
             await writableStream.write(blob);
             await writableStream.close();
-            showToastMessage('蹂寃쎌궗??씠 ?깃났?곸쑝濡???λ릺?덉뒿?덈떎.');
+            showToastMessage('변경사항이 성공적으로 저장되었습니다.');
             await saveFileHandle(sessionFileHandle.name, sessionFileHandle);
         }
     } catch (err) {
-        if (err.name !== 'AbortError') { console.error('?뚯씪 ????ㅽ뙣:', err); showToastMessage('?뚯씪 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.', true); }
+        if (err.name !== 'AbortError') { console.error('파일 저장 실패:', err); showToastMessage('파일 저장에 실패했습니다.', true); }
     } finally {
         saveBtn.disabled = false;
         saveAsBtn.disabled = false;
@@ -2293,18 +2033,18 @@ async function saveFile(isSaveAs = false, clickedButton = null) {
 }
 async function loadFile() {
     try {
-        const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'HTML ?뚯씪', accept: { 'text/html': ['.html'] } }] });
+        const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'HTML 파일', accept: { 'text/html': ['.html'] } }] });
         
-        // 臾댁“嫄?????뿉???닿린
+        // 무조건 새 탭에서 열기
         await loadFileInNewTab(fileHandle);
     } catch (err) {
-        if (err.name !== 'AbortError') { console.error('?뚯씪 ?닿린 ?ㅽ뙣:', err); showToastMessage('?뚯씪???댁? 紐삵뻽?듬땲??', true); }
+        if (err.name !== 'AbortError') { console.error('파일 열기 실패:', err); showToastMessage('파일을 열지 못했습니다.', true); }
     }
 }
 
 async function loadFileInCurrentTab(fileHandle) {
     try {
-        // ?뚯씪 ?쎄린
+        // 파일 읽기
         const file = await fileHandle.getFile();
         const contents = await file.text();
         const parser = new DOMParser();
@@ -2312,15 +2052,15 @@ async function loadFileInCurrentTab(fileHandle) {
         const restoredDataScript = doc.getElementById('restored-data');
         
         if (restoredDataScript && restoredDataScript.textContent) {
-            // ?꾩옱 ?몄뀡 ?낅뜲?댄듃
+            // 현재 세션 업데이트
             const currentSession = getCurrentSession();
             if (currentSession) {
-                // ?뚯씪紐낆뿉???뺤옣???쒓굅?섏뿬 ???대쫫 ?낅뜲?댄듃
+                // 파일명에서 확장자 제거하여 탭 이름 업데이트
                 const fileName = fileHandle.name.replace(/\.[^/.]+$/, "");
                 currentSession.displayName = fileName;
                 currentSession.fileHandle = fileHandle;
                 
-                // ?뚯씪 ??UI ?낅뜲?댄듃
+                // 파일 탭 UI 업데이트
                 const currentTab = document.querySelector(`[data-file-id="${currentFileId}"]`);
                 if (currentTab) {
                     const nameSpan = currentTab.querySelector('span');
@@ -2329,46 +2069,46 @@ async function loadFileInCurrentTab(fileHandle) {
                     }
                 }
                 
-                // ?뚯씪 ?곗씠??蹂듭썝
+                // 파일 데이터 복원
                 try {
                     const restoredData = JSON.parse(restoredDataScript.textContent);
                     
-                    // ?꾩옱 ?몄뀡 ?곗씠???낅뜲?댄듃
+                    // 현재 세션 데이터 업데이트
                     currentSession.quoteGroupsData = restoredData.quoteGroupsData || {};
                     currentSession.groupCounter = restoredData.groupCounter || 0;
                     currentSession.activeGroupId = restoredData.activeGroupId;
                     currentSession.memoText = restoredData.memoText || '';
                     currentSession.customerInfo = restoredData.customerInfo || [];
                     
-                    // ?꾩뿭 蹂?섎룄 ?낅뜲?댄듃 (?명솚?깆쓣 ?꾪빐)
+                    // 전역 변수도 업데이트 (호환성을 위해)
                     quoteGroupsData = currentSession.quoteGroupsData;
                     groupCounter = currentSession.groupCounter;
                     activeGroupId = currentSession.activeGroupId;
                     
-                    // UI ?곹깭 蹂듭썝
+                    // UI 상태 복원
                     currentSession.restoreUIState();
                     
-                    showToastMessage(`'${fileName}' ?뚯씪???꾩옱 ??뿉 濡쒕뱶?덉뒿?덈떎.`);
+                    showToastMessage(`'${fileName}' 파일을 현재 탭에 로드했습니다.`);
                     
-                    // ?뚯씪 ?몃뱾 ???
+                    // 파일 핸들 저장
                     await saveFileHandle(fileHandle.name, fileHandle);
                 } catch (e) {
-                    console.error("?곗씠???뚯떛 ?ㅽ뙣:", e);
-                    showToastMessage("?뚯씪 ?곗씠?곕? 泥섎━?섎뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.", true);
+                    console.error("데이터 파싱 실패:", e);
+                    showToastMessage("파일 데이터를 처리하는 중 오류가 발생했습니다.", true);
                 }
             }
         } else {
-            showToastMessage('?좏슚???곗씠?곌? ?ы븿??寃ъ쟻???뚯씪???꾨떃?덈떎.', true);
+            showToastMessage('유효한 데이터가 포함된 견적서 파일이 아닙니다.', true);
         }
     } catch (err) {
-        console.error('?뚯씪 濡쒕뵫 ?ㅽ뙣:', err);
-        showToastMessage('?뚯씪???댁? 紐삵뻽?듬땲??', true);
+        console.error('파일 로딩 실패:', err);
+        showToastMessage('파일을 열지 못했습니다.', true);
     }
 }
 
 async function loadFileInNewTab(fileHandle) {
     try {
-        // ?뚯씪 ?쎄린
+        // 파일 읽기
         const file = await fileHandle.getFile();
         const contents = await file.text();
         const parser = new DOMParser();
@@ -2376,51 +2116,51 @@ async function loadFileInNewTab(fileHandle) {
         const restoredDataScript = doc.getElementById('restored-data');
         
         if (restoredDataScript && restoredDataScript.textContent) {
-            // ?뚯씪紐낆뿉???뺤옣???쒓굅
+            // 파일명에서 확장자 제거
             const fileName = fileHandle.name.replace(/\.[^/.]+$/, "");
             
-            // ???뚯씪???앹꽦
+            // 새 파일탭 생성
             const newFileId = createNewFileTab(fileName);
             
-            // ?뚯씪 ?몃뱾 ?곌껐
+            // 파일 핸들 연결
             const session = filesManager.get(newFileId);
             if (session) {
                 session.fileHandle = fileHandle;
             }
             
-            // ?뚯씪 ?곗씠??蹂듭썝
+            // 파일 데이터 복원
             try {
                 const restoredData = JSON.parse(restoredDataScript.textContent);
                 
-                // ?꾩옱 ?몄뀡 ?곗씠???낅뜲?댄듃
+                // 현재 세션 데이터 업데이트
                 session.quoteGroupsData = restoredData.quoteGroupsData || {};
                 session.groupCounter = restoredData.groupCounter || 0;
                 session.activeGroupId = restoredData.activeGroupId;
                 session.memoText = restoredData.memoText || '';
                 session.customerInfo = restoredData.customerInfo || [];
                 
-                // ?꾩뿭 蹂?섎룄 ?낅뜲?댄듃 (?명솚?깆쓣 ?꾪빐)
+                // 전역 변수도 업데이트 (호환성을 위해)
                 quoteGroupsData = session.quoteGroupsData;
                 groupCounter = session.groupCounter;
                 activeGroupId = session.activeGroupId;
                 
-                // ?꾩껜 UI ?곹깭 蹂듭썝 (寃ъ쟻 洹몃９怨??ㅻⅨ履??⑤꼸 ?ы븿)
+                // 전체 UI 상태 복원 (견적 그룹과 오른쪽 패널 포함)
                 restoreState(restoredData);
                 
-                showToastMessage(`'${fileName}' ?뚯씪??????뿉 濡쒕뱶?덉뒿?덈떎.`);
+                showToastMessage(`'${fileName}' 파일을 새 탭에 로드했습니다.`);
                 
-                // ?뚯씪 ?몃뱾 ???
+                // 파일 핸들 저장
                 await saveFileHandle(fileHandle.name, fileHandle);
             } catch (e) {
-                console.error("?곗씠???뚯떛 ?ㅽ뙣:", e);
-                showToastMessage("?뚯씪 ?곗씠?곕? 泥섎━?섎뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.", true);
+                console.error("데이터 파싱 실패:", e);
+                showToastMessage("파일 데이터를 처리하는 중 오류가 발생했습니다.", true);
             }
         } else {
-            showToastMessage('?좏슚???곗씠?곌? ?ы븿??寃ъ쟻???뚯씪???꾨떃?덈떎.', true);
+            showToastMessage('유효한 데이터가 포함된 견적서 파일이 아닙니다.', true);
         }
     } catch (err) {
-        console.error('?뚯씪 濡쒕뵫 ?ㅽ뙣:', err);
-        showToastMessage('?뚯씪???댁? 紐삵뻽?듬땲??', true);
+        console.error('파일 로딩 실패:', err);
+        showToastMessage('파일을 열지 못했습니다.', true);
     }
 }
 
@@ -2428,7 +2168,7 @@ async function loadDataIntoWindow(fileHandle, openInNewWindow) {
     try {
         if ((await fileHandle.queryPermission({ mode: 'read' })) !== 'granted') {
             if ((await fileHandle.requestPermission({ mode: 'read' })) !== 'granted') {
-                showToastMessage('?뚯씪 ?쎄린 沅뚰븳???꾩슂?⑸땲??', true);
+                showToastMessage('파일 읽기 권한이 필요합니다.', true);
                 return;
             }
         }
@@ -2445,7 +2185,7 @@ async function loadDataIntoWindow(fileHandle, openInNewWindow) {
                 const relativeUrl = `?loadDataKey=${uniqueKey}`;
                 const newWindow = window.open(relativeUrl, '_blank');
                 if (!newWindow) {
-                    showToastMessage('?앹뾽??李⑤떒?섏뼱 ??李쎌쓣 ?????놁뒿?덈떎. ?앹뾽 李⑤떒???댁젣?댁＜?몄슂.', true);
+                    showToastMessage('팝업이 차단되어 새 창을 열 수 없습니다. 팝업 차단을 해제해주세요.', true);
                     sessionStorage.removeItem(uniqueKey);
                 }
             } else {
@@ -2454,20 +2194,20 @@ async function loadDataIntoWindow(fileHandle, openInNewWindow) {
                     restoreState(restoredData);
                     currentFileHandle = fileHandle;
                     document.title = fileHandle.name;
-                    showToastMessage(`'${fileHandle.name}' ?뚯씪???꾩옱 李쎌뿉 濡쒕뱶?덉뒿?덈떎.`);
+                    showToastMessage(`'${fileHandle.name}' 파일을 현재 창에 로드했습니다.`);
                 } catch (e) {
-                    console.error("?곗씠???뚯떛 ?먮뒗 ?곹깭 蹂듭썝 ?ㅽ뙣:", e);
-                    showToastMessage("?뚯씪 ?곗씠?곕? 泥섎━?섎뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.", true);
+                    console.error("데이터 파싱 또는 상태 복원 실패:", e);
+                    showToastMessage("파일 데이터를 처리하는 중 오류가 발생했습니다.", true);
                 }
             }
         } else {
-            showToastMessage('?좏슚???곗씠?곌? ?ы븿??寃ъ쟻???뚯씪???꾨떃?덈떎.', true);
+            showToastMessage('유효한 데이터가 포함된 견적서 파일이 아닙니다.', true);
         }
         await saveFileHandle(fileHandle.name, fileHandle);
     } catch (err) {
         if (err.name !== 'AbortError') {
-            console.error('?뚯씪 濡쒕뵫 ?ㅽ뙣:', err);
-            showToastMessage('?뚯씪???댁? 紐삵뻽?듬땲??', true);
+            console.error('파일 로딩 실패:', err);
+            showToastMessage('파일을 열지 못했습니다.', true);
         }
     }
 }
@@ -2476,7 +2216,7 @@ let recentFilesModal, recentFileSearchInput, recentFileListUl, loadingRecentFile
 
 async function openRecentFilesModal() {
     if (!recentFilesModal || !recentFileListUl || !loadingRecentFileListMsg || !recentFileSearchInput) {
-        showToastMessage("理쒓렐 ?뚯씪 遺덈윭?ㅺ린 UI媛 以鍮꾨릺吏 ?딆븯?듬땲??", true); return;
+        showToastMessage("최근 파일 불러오기 UI가 준비되지 않았습니다.", true); return;
     }
     loadingRecentFileListMsg.style.display = 'block';
     recentFileListUl.innerHTML = '';
@@ -2503,29 +2243,29 @@ function renderRecentFileList(fullList, searchTerm) {
             const titleSpan = document.createElement('span');
             titleSpan.textContent = item.name;
             titleSpan.className = 'text-sm font-medium text-gray-900 flex-grow';
-            titleSpan.title = `"${item.name}" ?뚯씪 諛붾줈 遺덈윭?ㅺ린 (?대┃)`;
+            titleSpan.title = `"${item.name}" 파일 바로 불러오기 (클릭)`;
             titleSpan.addEventListener('click', async () => {
                 try {
                     const handle = await getFileHandle(item.name);
                     if (handle) {
-                        // 臾댁“嫄?????뿉???닿린
+                        // 무조건 새 탭에서 열기
                         await loadFileInNewTab(handle);
                         recentFilesModal.classList.add('hidden');
-                    } else { showToastMessage(`'${item.name}' ?뚯씪 ?몃뱾??李얠쓣 ???놁뒿?덈떎. ?ㅼ떆 ?좏깮?댁＜?몄슂.`, true); }
-                } catch (e) { showToastMessage(`?뚯씪 濡쒕뱶 以??ㅻ쪟 諛쒖깮: ${e.message}`, true); }
+                    } else { showToastMessage(`'${item.name}' 파일 핸들을 찾을 수 없습니다. 다시 선택해주세요.`, true); }
+                } catch (e) { showToastMessage(`파일 로드 중 오류 발생: ${e.message}`, true); }
             });
             
             const deleteButton = document.createElement('button');
             deleteButton.innerHTML = `<svg class="w-5 h-5 text-gray-400 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
             deleteButton.className = 'p-1 rounded-full hover:bg-red-100 ml-2';
-            deleteButton.title = `"${item.name}" 理쒓렐 ?뚯씪 紐⑸줉?먯꽌 ??젣`;
+            deleteButton.title = `"${item.name}" 최근 파일 목록에서 삭제`;
             deleteButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm(`'${item.name}'??瑜? 理쒓렐 ?뚯씪 紐⑸줉?먯꽌 ??젣?섏떆寃좎뒿?덇퉴?`)) {
+                if (confirm(`'${item.name}'을(를) 최근 파일 목록에서 삭제하시겠습니까?`)) {
                     await deleteFileHandle(item.name);
                     const allHandles = await getAllFileHandles();
                     renderRecentFileList(allHandles, recentFileSearchInput.value);
-                    showToastMessage(`'${item.name}'??媛) 理쒓렐 ?뚯씪 紐⑸줉?먯꽌 ??젣?섏뿀?듬땲??`);
+                    showToastMessage(`'${item.name}'이(가) 최근 파일 목록에서 삭제되었습니다.`);
                 }
             });
             listItem.appendChild(titleSpan);
@@ -2533,7 +2273,7 @@ function renderRecentFileList(fullList, searchTerm) {
             recentFileListUl.appendChild(listItem);
         });
     } else {
-        recentFileListUl.innerHTML = `<li class="p-3 text-sm text-gray-500 text-center">理쒓렐 ?뚯씪???녾굅?? 寃??寃곌낵媛 ?놁뒿?덈떎.</li>`;
+        recentFileListUl.innerHTML = `<li class="p-3 text-sm text-gray-500 text-center">최근 파일이 없거나, 검색 결과가 없습니다.</li>`;
     }
 }
 function renderFilteredList(options) {
@@ -2552,7 +2292,7 @@ function renderFilteredList(options) {
             listEl.appendChild(li);
         });
     } else {
-        listEl.innerHTML = '<li class="p-3 text-gray-500 text-sm text-center">寃??寃곌낵媛 ?놁뒿?덈떎.</li>';
+        listEl.innerHTML = '<li class="p-3 text-gray-500 text-sm text-center">검색 결과가 없습니다.</li>';
     }
 }
 
@@ -2563,10 +2303,10 @@ async function loadAllInclusionDataSets() {
         const querySnapshot = await q.get();
         querySnapshot.forEach((doc) => { dataSets.push({ id: doc.id, ...doc.data() }); });
         return dataSets;
-    } catch (error) { console.error("紐⑸줉 遺덈윭?ㅺ린 ?ㅻ쪟:", error); showToastMessage("紐⑸줉??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.", true); return []; }
+    } catch (error) { console.error("목록 불러오기 오류:", error); showToastMessage("목록을 불러오는 중 오류가 발생했습니다.", true); return []; }
 }
 async function openLoadInclusionsModal() {
-    if (!activeGroupId) { showToastMessage("寃ъ쟻 洹몃９??癒쇱? ?좏깮?댁＜?몄슂.", true); return; }
+    if (!activeGroupId) { showToastMessage("견적 그룹을 먼저 선택해주세요.", true); return; }
     const modal = document.getElementById('loadInclusionsModal');
     const listEl = document.getElementById('inclusionsList');
     const loadingMsg = document.getElementById('loadingInclusionsMsg');
@@ -2598,7 +2338,7 @@ function applyInclusionData(item) {
     groupEl.querySelector('.inclusion-text').value = groupData.inclusionText;
     groupEl.querySelector('.exclusion-text').value = groupData.exclusionText;
     groupEl.querySelector('.inclusion-exclusion-doc-name-display').textContent = `(${item.name})`;
-    showToastMessage(`'${item.name}' ?댁뿭???곸슜?덉뒿?덈떎.`);
+    showToastMessage(`'${item.name}' 내역을 적용했습니다.`);
 }
 async function loadAllSnippets() {
     const dataSets = [];
@@ -2607,13 +2347,13 @@ async function loadAllSnippets() {
         const querySnapshot = await q.get();
         querySnapshot.forEach((doc) => { dataSets.push({ id: doc.id, ...doc.data() }); });
         return dataSets;
-    } catch (error) { console.error("?먯＜ ?곕뒗 臾몄옄 紐⑸줉 遺덈윭?ㅺ린 ?ㅻ쪟:", error); showToastMessage("?먯＜ ?곕뒗 臾몄옄 紐⑸줉??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.", true); return []; }
+    } catch (error) { console.error("자주 쓰는 문자 목록 불러오기 오류:", error); showToastMessage("자주 쓰는 문자 목록을 불러오는 중 오류가 발생했습니다.", true); return []; }
 }
 function applyMemoData(snippet) {
     const memoTextarea = document.getElementById('memoText');
     if (!memoTextarea) return;
     memoTextarea.value = snippet.content || '';
-    showToastMessage(`'${snippet.name}' ?댁슜??硫붾え???곸슜?덉뒿?덈떎.`);
+    showToastMessage(`'${snippet.name}' 내용을 메모에 적용했습니다.`);
 }
 async function openLoadMemoModal() {
     const modal = document.getElementById('loadMemoModal');
@@ -2639,7 +2379,7 @@ async function openLoadMemoModal() {
 function addNewGroup() {
     groupCounter++;
     const groupId = groupCounter;
-    const groupName = `寃ъ쟻 ${groupId}`;
+    const groupName = `견적 ${groupId}`;
     getCurrentQuoteGroups()[groupId] = {
         id: groupId,
         name: groupName,
@@ -2647,15 +2387,15 @@ function addNewGroup() {
         flightSchedule: [], 
         priceInfo: [],
         inclusionExclusionDocId: null,
-        inclusionExclusionDocName: '?덈줈???ы븿/遺덊룷???댁뿭',
+        inclusionExclusionDocName: '새로운 포함/불포함 내역',
         hotelMakerData: {
-            allHotelData: [{ nameKo: `???명뀛 1`, nameEn: "", website: "", image: "", description: "" }],
+            allHotelData: [{ nameKo: `새 호텔 1`, nameEn: "", website: "", image: "", description: "" }],
             currentHotelIndex: 0,
             currentHotelDocumentId: null,
-            currentHotelDocumentName: "???명뀛 ?뺣낫 紐⑥쓬"
+            currentHotelDocumentName: "새 호텔 정보 모음"
         },
         itineraryData: {
-            title: "???ы뻾 ?쇱젙??,
+            title: "새 여행 일정표",
             editingTitle: false,
             days: [
                 { date: dateToYyyyMmDd(new Date()), activities: [], isCollapsed: false, editingDate: false }
@@ -2665,14 +2405,14 @@ function addNewGroup() {
     createGroupUI(groupId);
     switchTab(groupId);
     
-    // ??寃ъ쟻 異붽? ??遺꾪븷 ?⑤꼸 ?덈퉬瑜?理쒖냼 ?덈퉬濡??ъ꽕??
+    // 새 견적 추가 후 분할 패널 너비를 최소 너비로 재설정
     setTimeout(resetSplitPaneWidths, 50);
     
-    showToastMessage(`??寃ъ쟻 洹몃９ ${groupName}??媛) 異붽??섏뿀?듬땲??`);
+    showToastMessage(`새 견적 그룹 ${groupName}이(가) 추가되었습니다.`);
 }
 function deleteGroup(groupId) {
-    if (Object.keys(quoteGroupsData).length <= 1) { showToastMessage('留덉?留?寃ъ쟻 洹몃９? ??젣?????놁뒿?덈떎.', true); return; }
-    if (confirm(`寃ъ쟻 ${groupId}??瑜? ??젣?섏떆寃좎뒿?덇퉴?`)) {
+    if (Object.keys(quoteGroupsData).length <= 1) { showToastMessage('마지막 견적 그룹은 삭제할 수 없습니다.', true); return; }
+    if (confirm(`견적 ${groupId}을(를) 삭제하시겠습니까?`)) {
         document.querySelector(`.quote-tab[data-group-id="${groupId}"]`)?.remove();
         document.getElementById(`group-content-${groupId}`)?.remove();
         delete quoteGroupsData[groupId];
@@ -2680,7 +2420,7 @@ function deleteGroup(groupId) {
             const lastTab = document.querySelector('.quote-tab:last-child');
             if (lastTab) { switchTab(lastTab.dataset.groupId); } else { activeGroupId = null; }
         }
-        showToastMessage(`寃ъ쟻 洹몃９ ${groupId}??媛) ??젣?섏뿀?듬땲??`);
+        showToastMessage(`견적 그룹 ${groupId}이(가) 삭제되었습니다.`);
     }
 }
 function deleteActiveGroup() { if (activeGroupId) { deleteGroup(activeGroupId); } }
@@ -2690,12 +2430,12 @@ function copyActiveGroup() {
     const newGroupData = JSON.parse(JSON.stringify(quoteGroupsData[activeGroupId]));
     groupCounter++;
     newGroupData.id = groupCounter;
-    newGroupData.name = `${newGroupData.name} (蹂듭궗蹂?`;
+    newGroupData.name = `${newGroupData.name} (복사본)`;
     newGroupData.calculators.forEach(calc => { calc.id = `calc_${Date.now()}_${Math.random()}`; });
     quoteGroupsData[groupCounter] = newGroupData;
     createGroupUI(groupCounter);
     switchTab(groupCounter);
-    showToastMessage(`寃ъ쟻 洹몃９ ${activeGroupId}??媛) 蹂듭궗?섏뼱 ??洹몃９ ${groupCounter}??媛) ?앹꽦?섏뿀?듬땲??`);
+    showToastMessage(`견적 그룹 ${activeGroupId}이(가) 복사되어 새 그룹 ${groupCounter}이(가) 생성되었습니다.`);
 }
 function switchTab(newGroupId) {
     if (activeGroupId && activeGroupId !== newGroupId) {
@@ -2713,24 +2453,24 @@ function switchTab(newGroupId) {
     contentsContainer.appendChild(groupEl);
     initializeGroup(groupEl, newGroupId);
     
-    // ???꾪솚 ??遺꾪븷 ?⑤꼸 ?덈퉬瑜?理쒖냼 ?덈퉬濡??ъ꽕??
+    // 탭 전환 후 분할 패널 너비를 최소 너비로 재설정
     setTimeout(resetSplitPaneWidths, 50);
 }
 
 function createGroupUI(groupId) {
     const tabsContainer = document.getElementById('quoteGroupTabs');
     
-    // 湲곗〈 ??씠 ?덈뒗吏 ?뺤씤
+    // 기존 탭이 있는지 확인
     const existingTab = tabsContainer.querySelector(`[data-group-id="${groupId}"]`);
     if (existingTab) {
-        return; // ?대? 議댁옱?섎㈃ ?앹꽦?섏? ?딆쓬
+        return; // 이미 존재하면 생성하지 않음
     }
     
     const tabEl = document.createElement('div');
     tabEl.className = 'quote-tab';
     tabEl.dataset.groupId = groupId;
-    const groupName = quoteGroupsData[groupId]?.name || `寃ъ쟻 ${groupId}`;
-    tabEl.innerHTML = `<span title="?붾툝?대┃?섏뿬 ?섏젙 媛??>${groupName}</span><button type="button" class="close-tab-btn" title="???リ린">횞</button>`;
+    const groupName = quoteGroupsData[groupId]?.name || `견적 ${groupId}`;
+    tabEl.innerHTML = `<span title="더블클릭하여 수정 가능">${groupName}</span><button type="button" class="close-tab-btn" title="탭 닫기">×</button>`;
     tabsContainer.appendChild(tabEl);
     tabEl.addEventListener('click', e => { if (e.target.tagName !== 'BUTTON') switchTab(groupId); });
     tabEl.querySelector('.close-tab-btn').addEventListener('click', () => deleteGroup(groupId));
@@ -2756,43 +2496,43 @@ function initializeGroup(groupEl, groupId) {
         <div class="xl:w-1/2 flex flex-col"> 
             <div id="calculators-wrapper-${groupId}" class="space-y-4"></div> 
             <div class="mt-4 flex gap-2">
-                <button type="button" class="btn btn-outline add-calculator-btn w-1/2"><i class="fas fa-plus mr-2"></i>寃ъ쟻 怨꾩궛 異붽?</button>
-                <button type="button" class="btn btn-outline copy-last-calculator-btn w-1/2"><i class="fas fa-copy mr-2"></i>寃ъ쟻 蹂듭궗</button>
+                <button type="button" class="btn btn-outline add-calculator-btn w-1/2"><i class="fas fa-plus mr-2"></i>견적 계산 추가</button>
+                <button type="button" class="btn btn-outline copy-last-calculator-btn w-1/2"><i class="fas fa-copy mr-2"></i>견적 복사</button>
             </div> 
         </div> 
         <div class="xl:w-1/2 space-y-6 right-panel-container"> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">?붽툑 ?덈궡</h2>
+                    <h2 class="text-base font-semibold">요금 안내</h2>
                     <div class="flex items-center space-x-2">
-                        <button type="button" class="btn btn-sm btn-outline copy-price-info-btn" title="HTML 蹂듭궗"><i class="fas fa-clipboard"></i> 肄붾뱶 蹂듭궗</button>
-                        <button type="button" class="btn btn-sm btn-green add-price-subgroup-btn"><i class="fas fa-plus"></i> 異붽?</button>
+                        <button type="button" class="btn btn-sm btn-outline copy-price-info-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
+                        <button type="button" class="btn btn-sm btn-green add-price-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
                 <div class="space-y-4 price-info-container"></div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-base font-semibold">??났 ?ㅼ?以?/h2>
+                    <h2 class="text-base font-semibold">항공 스케줄</h2>
                     <div class="flex items-center space-x-2">
-                        <button type="button" class="btn btn-sm btn-outline copy-flight-schedule-btn" title="HTML 蹂듭궗"><i class="fas fa-clipboard"></i> 肄붾뱶 蹂듭궗</button>
-                        <button type="button" class="btn btn-sm btn-green parse-gds-btn">GDS ?뚯떛</button>
-                        <button type="button" class="btn btn-sm btn-outline add-flight-subgroup-btn"><i class="fas fa-plus"></i> 異붽?</button>
+                        <button type="button" class="btn btn-sm btn-outline copy-flight-schedule-btn" title="HTML 복사"><i class="fas fa-clipboard"></i> 코드 복사</button>
+                        <button type="button" class="btn btn-sm btn-green parse-gds-btn">GDS 파싱</button>
+                        <button type="button" class="btn btn-sm btn-outline add-flight-subgroup-btn"><i class="fas fa-plus"></i> 추가</button>
                     </div>
                 </div>
                 <div class="space-y-4 flight-schedule-container"></div>
             </section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50">
                 <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center"><h2 class="text-base font-semibold">?ы븿/遺덊룷??/h2><span class="text-sm text-gray-500 ml-2 inclusion-exclusion-doc-name-display"></span></div>
-                    <button type="button" class="btn btn-sm btn-green load-inclusion-exclusion-db-btn"><i class="fas fa-database mr-1"></i> DB 遺덈윭?ㅺ린</button>
+                    <div class="flex items-center"><h2 class="text-base font-semibold">포함/불포함</h2><span class="text-sm text-gray-500 ml-2 inclusion-exclusion-doc-name-display"></span></div>
+                    <button type="button" class="btn btn-sm btn-green load-inclusion-exclusion-db-btn"><i class="fas fa-database mr-1"></i> DB 불러오기</button>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">?ы븿</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="?ы븿 ?댁뿭 蹂듭궗"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5" title="?대┃?섏뿬 ?섏젙 媛??></textarea></div>
-                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">遺덊룷??/h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="遺덊룷???댁뿭 蹂듭궗"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5" title="?대┃?섏뿬 ?섏젙 媛??></textarea></div>
+                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">포함</h3><button type="button" class="ml-2 copy-inclusion-btn inline-copy-btn" title="포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm inclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
+                    <div class="w-full sm:w-1/2"><div class="flex items-center mb-1"><h3 class="font-medium">불포함</h3><button type="button" class="ml-2 copy-exclusion-btn inline-copy-btn" title="불포함 내역 복사"><i class="far fa-copy"></i></button></div><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm exclusion-text" rows="5" title="클릭하여 수정 가능"></textarea></div>
                 </div>
             </section> 
-            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50"><h2 class="text-base font-semibold mb-4">?명뀛移대뱶 硫붿씠而?/h2><div id="hotel-maker-container-${groupId}"></div></section> 
+            <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50"><h2 class="text-base font-semibold mb-4">호텔카드 메이커</h2><div id="hotel-maker-container-${groupId}"></div></section> 
             <section class="p-4 sm:p-6 border rounded-lg bg-gray-50/50"><div id="itinerary-planner-container-${groupId}"></div></section> 
         </div> 
     </div>`;
@@ -2828,7 +2568,7 @@ function initializeGroup(groupEl, groupId) {
     const exclusionTextEl = groupEl.querySelector('.exclusion-text');
     if (inclusionTextEl) inclusionTextEl.value = groupData.inclusionText || '';
     if (exclusionTextEl) exclusionTextEl.value = groupData.exclusionText || '';
-    groupEl.querySelector('.inclusion-exclusion-doc-name-display').textContent = `(${groupData.inclusionExclusionDocName || '???댁뿭'})`;
+    groupEl.querySelector('.inclusion-exclusion-doc-name-display').textContent = `(${groupData.inclusionExclusionDocName || '새 내역'})`;
 
     const hotelMakerContainer = groupEl.querySelector(`#hotel-maker-container-${groupId}`);
     if (hotelMakerContainer) {
@@ -2842,24 +2582,24 @@ function initializeGroup(groupEl, groupId) {
 
 function buildCalculatorDOM(calcContainer) {
     const content = document.createElement('div');
-    content.innerHTML = `<div class="split-container"><div class="pnr-pane"><label class="label-text font-semibold mb-2"><span class="pnr-title-span" title="?붾툝?대┃?섏뿬 ?섏젙 媛??>PNR ?뺣낫</span></label><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="PNR ?뺣낫瑜??ш린??遺숈뿬?ｌ쑝?몄슂."></textarea></div><div class="resizer-handle"></div><div class="quote-pane"><div class="table-container"><table class="quote-table"><thead><tr class="header-row"><th><button type="button" class="btn btn-sm btn-primary add-person-type-btn"><i class="fas fa-plus"></i></button></th></tr><tr class="count-row"><th></th></tr></thead><tbody></tbody><tfoot></tfoot></table></div></div></div>`;
+    content.innerHTML = `<div class="split-container"><div class="pnr-pane"><label class="label-text font-semibold mb-2"><span class="pnr-title-span" title="더블클릭하여 수정 가능">PNR 정보</span></label><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="PNR 정보를 여기에 붙여넣으세요."></textarea></div><div class="resizer-handle"></div><div class="quote-pane"><div class="table-container"><table class="quote-table"><thead><tr class="header-row"><th><button type="button" class="btn btn-sm btn-primary add-person-type-btn"><i class="fas fa-plus"></i></button></th></tr><tr class="count-row"><th></th></tr></thead><tbody></tbody><tfoot></tfoot></table></div></div></div>`;
     const calculatorElement = content.firstElementChild;
     calcContainer.appendChild(calculatorElement);
 
-    // 珥덇린 ?덈퉬 ?ㅼ젙 - PNR ?곸뿭?????볤쾶
+    // 초기 너비 설정 - PNR 영역을 더 넓게
     const pnrPane = calculatorElement.querySelector('.pnr-pane');
     const quotePane = calculatorElement.querySelector('.quote-pane');
     
-    // 而⑦뀒?대꼫媛 DOM??異붽?????珥덇린 ?ш린 ?ㅼ젙
+    // 컨테이너가 DOM에 추가된 후 초기 크기 설정
     setTimeout(() => {
         const container = calculatorElement.querySelector('.split-container');
         if (container) {
             const containerWidth = container.offsetWidth;
             const resizerWidth = 5; // resizer-handle width
-            const idealQuoteWidth = 300; // 寃ъ쟻 ?뚯씠釉??댁긽?곸씤 ?ш린
+            const idealQuoteWidth = 300; // 견적 테이블 이상적인 크기
             const idealPnrWidth = containerWidth - idealQuoteWidth - resizerWidth;
             
-            if (idealPnrWidth > 150) { // 理쒖냼 PNR ?덈퉬 ?뺤씤
+            if (idealPnrWidth > 150) { // 최소 PNR 너비 확인
                 pnrPane.style.width = idealPnrWidth + 'px';
                 quotePane.style.width = idealQuoteWidth + 'px';
             }
@@ -2874,7 +2614,7 @@ function buildCalculatorDOM(calcContainer) {
         if (def.type === 'button') {
             labelCell.innerHTML = `<button type="button" class="btn btn-sm btn-secondary add-dynamic-row-btn">${def.label}</button>`;
         } else { 
-            labelCell.innerHTML = `<span class="cost-row-label-span" title="?붾툝?대┃?섏뿬 ?섏젙 媛??>${def.label}</span>`; 
+            labelCell.innerHTML = `<span class="cost-row-label-span" title="더블클릭하여 수정 가능">${def.label}</span>`; 
         }
     });
 }
@@ -2887,10 +2627,10 @@ function createCalculatorInstance(wrapper, groupId, calcData) {
     const headerDiv = document.createElement('div');
     headerDiv.className = 'calculator-header flex justify-between items-center pb-2 mb-2 border-b';
     headerDiv.innerHTML = `
-        <div class="calculator-handle cursor-grab text-gray-500 p-1" title="?쒖꽌 蹂寃?>
+        <div class="calculator-handle cursor-grab text-gray-500 p-1" title="순서 변경">
             <i class="fas fa-grip-vertical"></i>
         </div>
-        <button type="button" class="delete-calculator-btn text-gray-400 hover:text-red-600 z-10 p-1" title="??怨꾩궛湲???젣">
+        <button type="button" class="delete-calculator-btn text-gray-400 hover:text-red-600 z-10 p-1" title="이 계산기 삭제">
             <i class="fas fa-times-circle"></i>
         </button>
     `;
@@ -2902,7 +2642,7 @@ function createCalculatorInstance(wrapper, groupId, calcData) {
     if (calcData && calcData.tableHTML) {
         restoreCalculatorState(instanceContainer, calcData);
     } else {
-        addPersonTypeColumn(instanceContainer, '?깆씤', 1);
+        addPersonTypeColumn(instanceContainer, '성인', 1);
     }
     
     calculateAll(instanceContainer);
@@ -2914,19 +2654,19 @@ function restoreCalculatorState(instanceContainer, calcData) {
     if (pnrTextarea) pnrTextarea.value = calcData.pnr || '';
     
     const pnrTitleSpan = instanceContainer.querySelector('.pnr-title-span');
-    if (pnrTitleSpan) pnrTitleSpan.textContent = calcData.pnrTitle || 'PNR ?뺣낫';
+    if (pnrTitleSpan) pnrTitleSpan.textContent = calcData.pnrTitle || 'PNR 정보';
 
     const table = instanceContainer.querySelector('.quote-table');
     if (table && calcData.tableHTML) { 
         table.innerHTML = calcData.tableHTML;
     }
     else { 
-        addPersonTypeColumn(instanceContainer, '?깆씤', 1);
+        addPersonTypeColumn(instanceContainer, '성인', 1);
     }
 }
 
 // =======================================================================
-// 7. 寃ъ쟻 怨꾩궛湲??듭떖 濡쒖쭅
+// 7. 견적 계산기 핵심 로직
 // =======================================================================
 function makeEditable(element, inputType, onBlurCallback) {
     if (element.dataset.editing) return;
@@ -2974,23 +2714,23 @@ function getCellContent(rowId, colIndex, type) {
         case 'salesInput':
              return `<input type="text" class="input-field-sm ${type === 'salesInput' ? 'sales-price' : 'cost-item'}" name="${name}" value="${initialValue}" placeholder="">`;
         case 'calculated': 
-            return `<div class="calculated-field" data-row-id="${rowId}">0 ??/div>`;
+            return `<div class="calculated-field" data-row-id="${rowId}">0 원</div>`;
         case 'calculatedPercentage': 
             return `<div class="calculated-field" data-row-id="${rowId}">0.00 %</div>`;
         default: return '';
     }
 }
 
-function addPersonTypeColumn(calcContainer, typeName = '?깆씤', count = 1) {
+function addPersonTypeColumn(calcContainer, typeName = '성인', count = 1) {
     const table = calcContainer.querySelector('.quote-table');
     if (!table) return;
     const headerRow = table.querySelector('thead .header-row');
     const colIndex = headerRow.cells.length;
     const headerCell = document.createElement('th');
-    headerCell.innerHTML = `<div class="relative"><span class="person-type-name-span" title="?붾툝?대┃?섏뿬 ?섏젙 媛??>${typeName}</span><button type="button" class="remove-col-btn" title="????ぉ ??젣"><i class="fas fa-times"></i></button></div>`;
+    headerCell.innerHTML = `<div class="relative"><span class="person-type-name-span" title="더블클릭하여 수정 가능">${typeName}</span><button type="button" class="remove-col-btn" title="이 항목 삭제"><i class="fas fa-times"></i></button></div>`;
     headerRow.appendChild(headerCell);
     const countCell = document.createElement('th');
-    countCell.innerHTML = `<span class="person-count-span" title="?붾툝?대┃?섏뿬 ?섏젙 媛??>${count}</span>`;
+    countCell.innerHTML = `<span class="person-count-span" title="더블클릭하여 수정 가능">${count}</span>`;
     table.querySelector('thead .count-row').appendChild(countCell);
     table.querySelectorAll('tbody tr').forEach(tr => {
         const rowId = tr.dataset.rowId;
@@ -3002,7 +2742,7 @@ function addPersonTypeColumn(calcContainer, typeName = '?깆씤', count = 1) {
     calculateAll(calcContainer);
 }
 
-function addDynamicCostRow(calcContainer, label = '?좉퇋 ??ぉ') {
+function addDynamicCostRow(calcContainer, label = '신규 항목') {
     const table = calcContainer.querySelector('.quote-table');
     if (!table) return;
     const tbody = table.querySelector('tbody');
@@ -3013,7 +2753,7 @@ function addDynamicCostRow(calcContainer, label = '?좉퇋 ??ぉ') {
     const insertionIndex = Array.from(tbody.rows).indexOf(buttonRow);
     const newRow = tbody.insertRow(insertionIndex);
     newRow.dataset.rowId = rowId;
-    newRow.insertCell(0).innerHTML = `<div class="flex items-center"><button type="button" class="dynamic-row-delete-btn"><i class="fas fa-trash-alt"></i></button><span class="dynamic-row-label-span ml-2" title="?붾툝?대┃?섏뿬 ?섏젙 媛??>${label}</span></div>`;
+    newRow.insertCell(0).innerHTML = `<div class="flex items-center"><button type="button" class="dynamic-row-delete-btn"><i class="fas fa-trash-alt"></i></button><span class="dynamic-row-label-span ml-2" title="더블클릭하여 수정 가능">${label}</span></div>`;
     for (let i = 1; i < numCols; i++) { newRow.insertCell(i).innerHTML = getCellContent(rowId, i, 'costInput'); }
     
     calculateAll(calcContainer);
@@ -3027,10 +2767,10 @@ function updateSummaryRow(calcContainer) {
     const headerRow = table.querySelector('.header-row');
     if (!headerRow || headerRow.cells.length <= 1) return;
     const summaryRow = tfoot.insertRow();
-    summaryRow.insertCell(0).innerHTML = '<div class="p-2 font-bold text-center">?꾩껜 ?⑷퀎</div>';
+    summaryRow.insertCell(0).innerHTML = '<div class="p-2 font-bold text-center">전체 합계</div>';
     const summaryCell = summaryRow.insertCell(1);
     summaryCell.colSpan = headerRow.cells.length - 1;
-    summaryCell.innerHTML = `<div class="totals-summary-section flex items-center justify-around p-1"><div class="text-center mx-2"><span class="text-base font-medium text-gray-600">?꾩껜?곹뭹媛 </span><span class="text-lg font-bold text-indigo-700 totalSalesPrice">0 ??/span></div><div class="text-center mx-2"><span class="text-base font-medium text-gray-600">?꾩껜?섏씡 </span><span class="text-lg font-bold text-indigo-700 totalProfit">0 ??/span></div><div class="text-center mx-2"><span class="text-base font-medium text-gray-600">?꾩껜?섏씡瑜?</span><span class="text-lg font-bold text-indigo-700 totalProfitMargin">0.00 %</span></div></div>`;
+    summaryCell.innerHTML = `<div class="totals-summary-section flex items-center justify-around p-1"><div class="text-center mx-2"><span class="text-base font-medium text-gray-600">전체상품가 </span><span class="text-lg font-bold text-indigo-700 totalSalesPrice">0 원</span></div><div class="text-center mx-2"><span class="text-base font-medium text-gray-600">전체수익 </span><span class="text-lg font-bold text-indigo-700 totalProfit">0 원</span></div><div class="text-center mx-2"><span class="text-base font-medium text-gray-600">전체수익률 </span><span class="text-lg font-bold text-indigo-700 totalProfitMargin">0.00 %</span></div></div>`;
     summaryRow.cells[0].style.borderTop = "2px solid #a0aec0";
     summaryCell.style.borderTop = "2px solid #a0aec0";
 }
@@ -3084,13 +2824,13 @@ function calculateAll(calcContainer) {
     summarySection.querySelector('.totalProfitMargin').textContent = formatPercentage(grandTotalProfitMargin);
 }
 // =======================================================================
-// 8. 湲고? ?좏떥由ы떚 ?⑥닔
+// 8. 기타 유틸리티 함수
 // =======================================================================
 function createFlightSubgroup(container, subgroupData, groupId) {
     const subGroupDiv = document.createElement('div');
     subGroupDiv.className = 'dynamic-section flight-schedule-subgroup';
     subGroupDiv.id = subgroupData.id;
-    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="??젣"><i class="fas fa-trash-alt"></i></button><div class="mb-2"><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="??났?? title="?대┃?섏뿬 ?섏젙 媛?? value="${subgroupData.title || ''}"></div><div class="overflow-x-auto"><table class="flight-schedule-table"><thead><tr><th>?몃챸</th><th>異쒕컻??/th><th>異쒕컻吏</th><th>異쒕컻?쒓컙</th><th>?꾩갑??/th><th>?꾩갑吏</th><th>?꾩갑?쒓컙</th><th style="width: 50px;"></th></tr></thead><tbody></tbody></table></div><div class="add-row-btn-container pt-2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></div>`;
+    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="삭제"><i class="fas fa-trash-alt"></i></button><div class="mb-2"><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="항공사" title="클릭하여 수정 가능" value="${subgroupData.title || ''}"></div><div class="overflow-x-auto"><table class="flight-schedule-table"><thead><tr><th>편명</th><th>출발일</th><th>출발지</th><th>출발시간</th><th>도착일</th><th>도착지</th><th>도착시간</th><th style="width: 50px;"></th></tr></thead><tbody></tbody></table></div><div class="add-row-btn-container pt-2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></div>`;
     const tbody = subGroupDiv.querySelector('tbody');
     subgroupData.rows.forEach(rowData => addFlightRow(tbody, rowData, subgroupData));
     
@@ -3099,19 +2839,19 @@ function createFlightSubgroup(container, subgroupData, groupId) {
 function addFlightRow(tbody, rowData, subgroupData) {
     const tr = document.createElement('tr');
     const fields = [{ key: 'flightNum', placeholder: 'ZE561' }, { key: 'depDate', placeholder: '07/09' }, { key: 'originCity', placeholder: 'ICN' }, { key: 'depTime', placeholder: '20:55' }, { key: 'arrDate', placeholder: '07/09' }, { key: 'destCity', placeholder: 'CXR' }, { key: 'arrTime', placeholder: '23:55' }];
-    tr.innerHTML = fields.map(f => `<td><span class="flight-schedule-cell" data-field="${f.key}" data-placeholder="${f.placeholder}" contenteditable="true" title="?대┃?섏뿬 ?섏젙 媛??>${rowData[f.key] || ''}</span></td>`).join('') + `<td class="text-center"><button type="button" class="delete-row-btn" title="??젣"><i class="fas fa-trash"></i></button></td>`;
+    tr.innerHTML = fields.map(f => `<td><span class="flight-schedule-cell" data-field="${f.key}" data-placeholder="${f.placeholder}" contenteditable="true" title="클릭하여 수정 가능">${rowData[f.key] || ''}</span></td>`).join('') + `<td class="text-center"><button type="button" class="delete-row-btn" title="삭제"><i class="fas fa-trash"></i></button></td>`;
     tbody.appendChild(tr);
 }
 function generateInclusionExclusionInlineHtml(inclusionText, exclusionText) { 
     const i = inclusionText ? inclusionText.replace(/\n/g, '<br>') : ''; 
     const e = exclusionText ? exclusionText.replace(/\n/g, '<br>') : ''; 
-    return `<table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px"><tbody><tr><td style="vertical-align:top;width:50%;padding-right:10px"><h3 style="font-size:16px;font-weight:600;margin-bottom:8px">?ы븿</h3><div style="padding:8px;border:1px solid #eee;min-height:100px">${i}</div></td><td style="vertical-align:top;width:50%;padding-left:10px"><h3 style="font-size:16px;font-weight:600;margin-bottom:8px">遺덊룷??/h3><div style="padding:8px;border:1px solid #eee;min-height:100px">${e}</div></td></tr></tbody></table>`; 
+    return `<table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px"><tbody><tr><td style="vertical-align:top;width:50%;padding-right:10px"><h3 style="font-size:16px;font-weight:600;margin-bottom:8px">포함</h3><div style="padding:8px;border:1px solid #eee;min-height:100px">${i}</div></td><td style="vertical-align:top;width:50%;padding-left:10px"><h3 style="font-size:16px;font-weight:600;margin-bottom:8px">불포함</h3><div style="padding:8px;border:1px solid #eee;min-height:100px">${e}</div></td></tr></tbody></table>`; 
 }
 function generateFlightScheduleInlineHtml(flightData) { 
     let html = ''; 
     if(flightData) {
         flightData.forEach(subgroup => { 
-            html += `<h4 style="font-size:14px;font-weight:600;margin-bottom:8px">${subgroup.title || '??났 ?ㅼ?以?}</h4><table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px;margin-bottom:16px"><thead><tr style="background-color:#f9fafb"><th style="border:1px solid #ddd;padding:8px;text-align:left">?몃챸</th><th style="border:1px solid #ddd;padding:8px;text-align:left">異쒕컻??/th><th style="border:1px solid #ddd;padding:8px;text-align:left">異쒕컻吏</th><th style="border:1px solid #ddd;padding:8px;text-align:left">異쒕컻?쒓컙</th><th style="border:1px solid #ddd;padding:8px;text-align:left">?꾩갑??/th><th style="border:1px solid #ddd;padding:8px;text-align:left">?꾩갑吏</th><th style="border:1px solid #ddd;padding:8px;text-align:left">?꾩갑?쒓컙</th></tr></thead><tbody>`; 
+            html += `<h4 style="font-size:14px;font-weight:600;margin-bottom:8px">${subgroup.title || '항공 스케줄'}</h4><table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px;margin-bottom:16px"><thead><tr style="background-color:#f9fafb"><th style="border:1px solid #ddd;padding:8px;text-align:left">편명</th><th style="border:1px solid #ddd;padding:8px;text-align:left">출발일</th><th style="border:1px solid #ddd;padding:8px;text-align:left">출발지</th><th style="border:1px solid #ddd;padding:8px;text-align:left">출발시간</th><th style="border:1px solid #ddd;padding:8px;text-align:left">도착일</th><th style="border:1px solid #ddd;padding:8px;text-align:left">도착지</th><th style="border:1px solid #ddd;padding:8px;text-align:left">도착시간</th></tr></thead><tbody>`; 
             subgroup.rows.forEach(row => { html += `<tr><td style="border:1px solid #ddd;padding:8px">${row.flightNum || ''}</td><td style="border:1px solid #ddd;padding:8px">${row.depDate || ''}</td><td style="border:1px solid #ddd;padding:8px">${row.originCity || ''}</td><td style="border:1px solid #ddd;padding:8px">${row.depTime || ''}</td><td style="border:1px solid #ddd;padding:8px">${row.arrDate || ''}</td><td style="border:1px solid #ddd;padding:8px">${row.destCity || ''}</td><td style="border:1px solid #ddd;padding:8px">${row.arrTime || ''}</td></tr>`; }); 
             html += `</tbody></table>`; 
         }); 
@@ -3123,23 +2863,23 @@ function createPriceSubgroup(container, subgroupData, groupId) {
     const subGroupDiv = document.createElement('div');
     subGroupDiv.className = 'dynamic-section price-subgroup';
     subGroupDiv.id = subgroupData.id;
-    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="??젣"><i class="fas fa-trash-alt"></i></button><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm mb-2 price-subgroup-title" placeholder="寃ъ쟻?ㅻ챸" title="?대┃?섏뿬 ?섏젙 媛?? value="${subgroupData.title || ''}"><table class="price-table"><thead><tr><th style="width:25%">?댁뿭</th><th>1?몃떦湲덉븸</th><th>?몄썝</th><th>珥앷툑??/th><th style="width:30%">鍮꾧퀬</th><th style="width:50px"></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3" class="text-right font-bold pr-2">珥??⑷퀎</td><td class="grand-total">0</td><td colspan="2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></td></tr></tfoot></table>`;
+    subGroupDiv.innerHTML = `<button type="button" class="delete-dynamic-section-btn" title="삭제"><i class="fas fa-trash-alt"></i></button><input type="text" class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm mb-2 price-subgroup-title" placeholder="견적설명" title="클릭하여 수정 가능" value="${subgroupData.title || ''}"><table class="price-table"><thead><tr><th style="width:25%">내역</th><th>1인당금액</th><th>인원</th><th>총금액</th><th style="width:30%">비고</th><th style="width:50px"></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3" class="text-right font-bold pr-2">총 합계</td><td class="grand-total">0</td><td colspan="2"><button type="button" class="add-row-btn"><i class="fas fa-plus mr-1"></i></button></td></tr></tfoot></table>`;
     const tbody = subGroupDiv.querySelector('tbody');
     if (subgroupData.rows && subgroupData.rows.length > 0) {
         subgroupData.rows.forEach(rowData => addPriceRow(tbody, rowData, subgroupData, subGroupDiv, groupId));
     }
-    updateGrandTotal(subGroupDiv); // ?섏젙???⑥닔 ?몄텧
+    updateGrandTotal(subGroupDiv); // 수정된 함수 호출
     container.appendChild(subGroupDiv);
 }
 
 function addPriceRow(tbody, rowData, subgroupData, subGroupDiv, groupId) {
     const tr = document.createElement('tr');
     const fields = [
-        { key: 'item', align: 'center', placeholder: '??ぉ' }, 
-        { key: 'price', align: 'center', placeholder: '媛寃? }, 
-        { key: 'count', align: 'center', placeholder: '?섎웾' }, 
-        { key: 'total', align: 'center', readonly: true, placeholder: '?⑷퀎' }, 
-        { key: 'remarks', align: 'center', placeholder: '鍮꾧퀬' }
+        { key: 'item', align: 'center', placeholder: '항목' }, 
+        { key: 'price', align: 'center', placeholder: '가격' }, 
+        { key: 'count', align: 'center', placeholder: '수량' }, 
+        { key: 'total', align: 'center', readonly: true, placeholder: '합계' }, 
+        { key: 'remarks', align: 'center', placeholder: '비고' }
     ];
     
     tr.innerHTML = fields.map(f => {
@@ -3148,7 +2888,7 @@ function addPriceRow(tbody, rowData, subgroupData, subGroupDiv, groupId) {
                 (parseFloat(String(rowData[f.key]).replace(/,/g, '')) || 0).toLocaleString() : 
                 rowData[f.key]) : '';
         
-        return `<td><span class="price-table-cell text-${f.align}" data-field="${f.key}" data-placeholder="${f.placeholder}" ${f.readonly ? 'readonly' : 'contenteditable="true"'} title="${f.readonly ? '?먮룞 怨꾩궛?? : '?대┃?섏뿬 ?섏젙 媛??}">${value}</span></td>`;
+        return `<td><span class="price-table-cell text-${f.align}" data-field="${f.key}" data-placeholder="${f.placeholder}" ${f.readonly ? 'readonly' : 'contenteditable="true"'} title="${f.readonly ? '자동 계산됨' : '클릭하여 수정 가능'}">${value}</span></td>`;
     }).join('') + `<td><button type="button" class="delete-row-btn"><i class="fas fa-trash"></i></button></td>`;
     
     tbody.appendChild(tr);
@@ -3178,16 +2918,16 @@ function addPriceRow(tbody, rowData, subgroupData, subGroupDiv, groupId) {
         const totalCell = tr.querySelector('[data-field="total"]');
         if (totalCell) totalCell.textContent = total.toLocaleString();
         
-        updateGrandTotal(subGroupDiv); // ?섏젙???⑥닔 ?몄텧
+        updateGrandTotal(subGroupDiv); // 수정된 함수 호출
     }
     updateRow();
 }
 
 
 /**
- * [??理쒖쥌 ?섏젙???⑥닔] ?붽툑 ?덈궡 ?뚯씠釉붿쓽 珥앺빀怨꾨? 怨꾩궛?섍퀬 ?붾㈃???낅뜲?댄듃?⑸땲??
- * ?곗씠??媛앹껜 ????붾㈃(DOM)??媛??됱뿉??吏곸젒 媛믪쓣 ?쎌뼱? 怨꾩궛?섏뿬 ?곗씠???숆린??臾몄젣瑜??닿껐?⑸땲??
- * @param {HTMLElement} subGroupDiv - 珥앺빀怨꾨? 怨꾩궛???붽툑 ?덈궡 洹몃９??DOM ?붿냼
+ * [✨ 최종 수정된 함수] 요금 안내 테이블의 총합계를 계산하고 화면에 업데이트합니다.
+ * 데이터 객체 대신 화면(DOM)의 각 행에서 직접 값을 읽어와 계산하여 데이터 동기화 문제를 해결합니다.
+ * @param {HTMLElement} subGroupDiv - 총합계를 계산할 요금 안내 그룹의 DOM 요소
  */
 function updateGrandTotal(subGroupDiv) {
     if (!subGroupDiv) return;
@@ -3220,7 +2960,7 @@ function generatePriceInfoInlineHtml(priceData) {
             if (subgroup.title) { 
                 html += `<h4 style="font-size:14px;font-weight:600;margin-bottom:8px; padding-left: 8px;">${subgroup.title}</h4>`; 
             }
-            html += `<table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px;margin-bottom:16px"><thead><tr style="background-color:#f9fafb"><th style="border:1px solid #ddd;padding:8px;text-align:center">?댁뿭</th><th style="border:1px solid #ddd;padding:8px;text-align:center">1?몃떦 湲덉븸</th><th style="border:1px solid #ddd;padding:8px;text-align:center">?몄썝</th><th style="border:1px solid #ddd;padding:8px;text-align:center">珥?湲덉븸</th><th style="border:1px solid #ddd;padding:8px;text-align:center">鍮꾧퀬</th></tr></thead><tbody>`;
+            html += `<table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px;margin-bottom:16px"><thead><tr style="background-color:#f9fafb"><th style="border:1px solid #ddd;padding:8px;text-align:center">내역</th><th style="border:1px solid #ddd;padding:8px;text-align:center">1인당 금액</th><th style="border:1px solid #ddd;padding:8px;text-align:center">인원</th><th style="border:1px solid #ddd;padding:8px;text-align:center">총 금액</th><th style="border:1px solid #ddd;padding:8px;text-align:center">비고</th></tr></thead><tbody>`;
             
             let grandTotal = 0;
             subgroup.rows.forEach(row => { 
@@ -3232,7 +2972,7 @@ function generatePriceInfoInlineHtml(priceData) {
                 html += `<tr><td style="border:1px solid #ddd;padding:8px">${row.item || ''}</td><td style="border:1px solid #ddd;padding:8px;text-align:right">${p.toLocaleString()}</td><td style="border:1px solid #ddd;padding:8px;text-align:center">${c}</td><td style="border:1px solid #ddd;padding:8px;text-align:right">${t.toLocaleString()}</td><td style="border:1px solid #ddd;padding:8px">${row.remarks || ''}</td></tr>`; 
             });
             
-            html += `</tbody><tfoot><tr style="font-weight:bold"><td colspan="3" style="border:1px solid #ddd;padding:8px;text-align:right">珥??⑷퀎</td><td style="border:1px solid #ddd;padding:8px;text-align:right">${grandTotal.toLocaleString()}</td><td style="border:1px solid #ddd;padding:8px"></td></tr></tfoot></table>`;
+            html += `</tbody><tfoot><tr style="font-weight:bold"><td colspan="3" style="border:1px solid #ddd;padding:8px;text-align:right">총 합계</td><td style="border:1px solid #ddd;padding:8px;text-align:right">${grandTotal.toLocaleString()}</td><td style="border:1px solid #ddd;padding:8px"></td></tr></tfoot></table>`;
         });
     }
     return html;
@@ -3240,8 +2980,8 @@ function generatePriceInfoInlineHtml(priceData) {
 
 
 /**
- * 寃ъ쟻 怨꾩궛 紐⑤뱢??遺꾪븷 ?⑤꼸(split pane) ?덈퉬瑜?理쒖냼 ?곹깭濡??ъ꽕?뺥빀?덈떎.
- * quote-pane??CSS???뺤쓽??min-width濡??ㅼ젙?섍퀬 pnr-pane???섎㉧吏 怨듦컙??李⑥??섎룄濡??⑸땲??
+ * 견적 계산 모듈의 분할 패널(split pane) 너비를 최소 상태로 재설정합니다.
+ * quote-pane을 CSS에 정의된 min-width로 설정하고 pnr-pane이 나머지 공간을 차지하도록 합니다.
  */
 function resetSplitPaneWidths() {
     const splitContainers = document.querySelectorAll('.split-container');
@@ -3251,25 +2991,25 @@ function resetSplitPaneWidths() {
         const resizer = container.querySelector('.resizer-handle');
 
         if (pnrPane && quotePane && resizer) {
-            // flexbox ?숈옉???좎떆 鍮꾪솢?깊솕?섏뿬 紐낆떆?곸씤 ?덈퉬 ?ㅼ젙???덉슜?⑸땲??
+            // flexbox 동작을 잠시 비활성화하여 명시적인 너비 설정을 허용합니다.
             pnrPane.style.flex = 'none';
             quotePane.style.flex = 'none';
 
             const containerWidth = container.offsetWidth;
             const resizerWidth = resizer.offsetWidth;
             
-            // CSS?먯꽌 min-width 媛믪쓣 吏곸젒 媛?몄샃?덈떎.
+            // CSS에서 min-width 값을 직접 가져옵니다.
             const quotePaneMinWidth = parseInt(window.getComputedStyle(quotePane).minWidth, 10);
 
-            // quote-pane ?덈퉬瑜?min-width濡??ㅼ젙?⑸땲??
+            // quote-pane 너비를 min-width로 설정합니다.
             const newQuoteWidth = quotePaneMinWidth;
             quotePane.style.width = `${newQuoteWidth}px`;
             
-            // pnr-pane???섎㉧吏 ?덈퉬瑜?李⑥??섎룄濡??ㅼ젙?⑸땲??
+            // pnr-pane이 나머지 너비를 차지하도록 설정합니다.
             const newPnrWidth = containerWidth - newQuoteWidth - resizerWidth;
             pnrPane.style.width = `${newPnrWidth > 0 ? newPnrWidth : 0}px`;
 
-            // ?좎떆 ??flexbox ?숈옉??蹂듭썝?⑸땲??
+            // 잠시 후 flexbox 동작을 복원합니다.
             setTimeout(() => {
                 pnrPane.style.removeProperty('flex');
                 quotePane.style.removeProperty('flex');
@@ -3287,19 +3027,19 @@ function restoreState(data) {
 
     Object.values(quoteGroupsData).forEach(group => {
         if (!group.name) {
-            group.name = `寃ъ쟻 ${group.id}`;
+            group.name = `견적 ${group.id}`;
         }
         if (!group.hotelMakerData) {
             group.hotelMakerData = {
-                allHotelData: [{ nameKo: `???명뀛 1`, nameEn: "", website: "", image: "", description: "" }],
+                allHotelData: [{ nameKo: `새 호텔 1`, nameEn: "", website: "", image: "", description: "" }],
                 currentHotelIndex: 0,
                 currentHotelDocumentId: null,
-                currentHotelDocumentName: "???명뀛 ?뺣낫 紐⑥쓬"
+                currentHotelDocumentName: "새 호텔 정보 모음"
             };
         }
         if (!group.itineraryData) {
              group.itineraryData = {
-                title: "???ы뻾 ?쇱젙??,
+                title: "새 여행 일정표",
                 editingTitle: false,
                 days: [{ date: dateToYyyyMmDd(new Date()), activities: [], isCollapsed: false, editingDate: false }]
             };
@@ -3321,32 +3061,32 @@ function restoreState(data) {
         addNewGroup(); 
     }
 
-    // ?뚯씪 濡쒕뱶 ??遺꾪븷 ?⑤꼸 ?덈퉬瑜?理쒖냼 ?덈퉬濡??ъ꽕?뺥빀?덈떎.
-    // DOM???꾩쟾???뚮뜑留곷맂 ???ㅽ뻾?섎룄濡?setTimeout???ъ슜?⑸땲??
+    // 파일 로드 시 분할 패널 너비를 최소 너비로 재설정합니다.
+    // DOM이 완전히 렌더링된 후 실행되도록 setTimeout을 사용합니다.
     setTimeout(resetSplitPaneWidths, 100);
 }
 
 function initializeNewSession() {
-    // ?뚯씪 ???쒖뒪??珥덇린??
+    // 파일 탭 시스템 초기화
     if (filesManager.size === 0) {
-        createNewFileTab('??寃ъ쟻??);
+        createNewFileTab('새 견적서');
     }
     
-    // 湲곗〈 珥덇린??濡쒖쭅
-    document.getElementById('memoText').value = '吏?먯뼱?ㅼ슱???낆?留??붿껌';
+    // 기존 초기화 로직
+    document.getElementById('memoText').value = '지원어려울시 업셀링 요청';
     
-    // ?꾩옱 ?몄뀡 ?낅뜲?댄듃
+    // 현재 세션 업데이트
     updateCurrentSession();
 
-    // ??泥?濡쒕뱶 ??遺꾪븷 ?⑤꼸 ?덈퉬瑜?理쒖냼 ?덈퉬濡??ъ꽕?뺥빀?덈떎.
+    // 앱 첫 로드 시 분할 패널 너비를 최소 너비로 재설정합니다.
     setTimeout(resetSplitPaneWidths, 100);
 }
 
 // =======================================================================
-// 9. ?대깽??由ъ뒪??以묒븰 愿由?(Event Delegation)
+// 9. 이벤트 리스너 중앙 관리 (Event Delegation)
 // =======================================================================
 function setupEventListeners() {
-    // --- ?뚯씪 ??諛??대깽??由ъ뒪??---
+    // --- 파일 탭 바 이벤트 리스너 ---
     const fileTabBar = document.getElementById('fileTabBar');
     if (fileTabBar) {
         fileTabBar.addEventListener('click', (event) => {
@@ -3372,14 +3112,14 @@ function setupEventListeners() {
         });
     }
 
-    // --- ?곷떒 ?ㅻ뜑 諛?湲濡쒕쾶 踰꾪듉 ?대깽?몃뒗 rebindWorkspaceEventListeners?먯꽌 泥섎━ ---
+    // --- 상단 헤더 및 글로벌 버튼 이벤트는 rebindWorkspaceEventListeners에서 처리 ---
 
-    // --- ?뚯씪 遺덈윭?ㅺ린 ?쇰꺼 ?대┃ ?대깽??由ъ뒪?덈뒗 rebindWorkspaceEventListeners?먯꽌 泥섎━ ---
-    // loadFile ?대깽?몃뒗 ?뚯씪 ???꾪솚 ?쒕쭏??rebindWorkspaceEventListeners()?먯꽌 ?щ컮?몃뵫??
+    // --- 파일 불러오기 라벨 클릭 이벤트 리스너는 rebindWorkspaceEventListeners에서 처리 ---
+    // loadFile 이벤트는 파일 탭 전환 시마다 rebindWorkspaceEventListeners()에서 재바인딩됨
 
-    // --- 怨좉컼 ?뺣낫 而⑦뀒?대꼫 ?대깽???꾩엫? rebindWorkspaceEventListeners?먯꽌 泥섎━ ---
+    // --- 고객 정보 컨테이너 이벤트 위임은 rebindWorkspaceEventListeners에서 처리 ---
 
-    // --- 紐⑤떖 ?リ린 踰꾪듉 ---
+    // --- 모달 닫기 버튼 ---
     document.body.addEventListener('click', event => {
         if (event.target.closest('#closeLoadInclusionsModalBtn, #cancelLoadInclusionsModalBtn')) {
             document.getElementById('loadInclusionsModal').classList.add('hidden');
@@ -3399,33 +3139,9 @@ function setupEventListeners() {
         if(event.target.closest('#ipCloseLoadTemplateModal, #ipCancelLoadTemplateModal')) {
             document.getElementById('ipLoadTemplateModal').classList.add('hidden');
         }
-        if (event.target.closest('#ipCloseLoadAttractionModal, #ipCancelLoadAttractionModal')) {
-            ip_closeLoadAttractionModal();
-            ip_resetPendingAddActivityState();
-        }
-        if (event.target.closest('#ipChoiceCancelBtn')) {
-            ip_closeAddActivityChoiceModal();
-            ip_resetPendingAddActivityState();
-        }
-        if (event.target.closest('#ipChoiceFromDbBtn')) {
-            ip_closeAddActivityChoiceModal();
-            ip_loadAttractionListFromFirestore();
-        }
-        if (event.target.closest('#ipChoiceNewInputBtn')) {
-            const groupId = ipPendingNewActivityGroupId;
-            const dayIndex = ipPendingNewActivityDayIndex;
-            ip_closeAddActivityChoiceModal();
-            if (groupId && Number.isInteger(dayIndex)) {
-                ip_openBlankActivityModal(groupId, dayIndex);
-                ip_resetPendingAddActivityState();
-            } else {
-                showToastMessage('???쇱젙 異붽? ????좎쭨瑜?李얠쓣 ???놁뒿?덈떎.', true);
-                ip_resetPendingAddActivityState();
-            }
-        }
     });
 
-    // --- ?숈쟻 而⑦뀗痢?而⑦뀒?대꼫 (?대깽???꾩엫) ---
+    // --- 동적 컨텐츠 컨테이너 (이벤트 위임) ---
     const contentsContainer = document.getElementById('quoteGroupContentsContainer');
     if (!contentsContainer) return;
 
@@ -3448,12 +3164,12 @@ function setupEventListeners() {
         if (button.classList.contains('add-calculator-btn')) {
             syncGroupUIToData(groupId);
             const groupData = quoteGroupsData[groupId];
-            const newCalcData = { id: `calc_${Date.now()}`, pnr: '', tableHTML: null, pnrTitle: 'PNR ?뺣낫' };
+            const newCalcData = { id: `calc_${Date.now()}`, pnr: '', tableHTML: null, pnrTitle: 'PNR 정보' };
             groupData.calculators.push(newCalcData);
             renderCalculators(groupId);
         } else if (button.classList.contains('copy-last-calculator-btn')) {
              const groupData = quoteGroupsData[groupId];
-            if (!groupData || groupData.calculators.length === 0) { showToastMessage('蹂듭궗??寃ъ쟻 怨꾩궛???놁뒿?덈떎.', true); return; }
+            if (!groupData || groupData.calculators.length === 0) { showToastMessage('복사할 견적 계산이 없습니다.', true); return; }
             syncGroupUIToData(groupId);
             const lastCalculatorData = groupData.calculators[groupData.calculators.length - 1];
             const newCalcData = JSON.parse(JSON.stringify(lastCalculatorData));
@@ -3461,7 +3177,7 @@ function setupEventListeners() {
             groupData.calculators.push(newCalcData);
             renderCalculators(groupId);
         } else if (button.classList.contains('delete-calculator-btn')) {
-            if (confirm('??寃ъ쟻 怨꾩궛湲곕? ??젣?섏떆寃좎뒿?덇퉴?')) {
+            if (confirm('이 견적 계산기를 삭제하시겠습니까?')) {
                 const instance = button.closest('.calculator-instance');
                 const calcId = instance.dataset.calculatorId;
                 quoteGroupsData[groupId].calculators = quoteGroupsData[groupId].calculators.filter(c => c.id !== calcId);
@@ -3469,12 +3185,12 @@ function setupEventListeners() {
             }
         } else if (button.classList.contains('add-person-type-btn')) {
             const calcContainer = button.closest('.calculator-instance');
-            addPersonTypeColumn(calcContainer, '?꾨룞', 1);
+            addPersonTypeColumn(calcContainer, '아동', 1);
         } else if (button.classList.contains('add-dynamic-row-btn')) {
             const calcContainer = button.closest('.calculator-instance');
             addDynamicCostRow(calcContainer);
         } else if (button.classList.contains('remove-col-btn')) {
-            if (confirm('?대떦 ??ぉ????젣?섏떆寃좎뒿?덇퉴?')) {
+            if (confirm('해당 항목을 삭제하시겠습니까?')) {
                 const headerCell = button.closest('th');
                 const colIndex = Array.from(headerCell.parentNode.children).indexOf(headerCell);
                 const calcContainer = button.closest('.calculator-instance');
@@ -3483,7 +3199,7 @@ function setupEventListeners() {
                 calculateAll(calcContainer);
             }
         } else if (button.classList.contains('dynamic-row-delete-btn')) {
-            if (confirm('?대떦 ??ぉ????젣?섏떆寃좎뒿?덇퉴?')) {
+            if (confirm('해당 항목을 삭제하시겠습니까?')) {
                  const calcContainer = button.closest('.calculator-instance');
                  button.closest('tr').remove();
                  calculateAll(calcContainer);
@@ -3518,9 +3234,9 @@ function setupEventListeners() {
         } else if (button.classList.contains('add-price-subgroup-btn')) {
             const priceContainer = button.closest('section').querySelector('.price-info-container');
             const defaultRows = [
-                { item: "?깆씤?붽툑", price: "0", count: "1", remarks: "" },
-                { item: "?뚯븘?붽툑", price: "0", count: "0", remarks: "留?~12?몃?留? },
-                { item: "?좎븘?붽툑", price: "0", count: "0", remarks: "留?4媛쒖썡誘몃쭔" }
+                { item: "성인요금", price: "0", count: "1", remarks: "" },
+                { item: "소아요금", price: "0", count: "0", remarks: "만2~12세미만" },
+                { item: "유아요금", price: "0", count: "0", remarks: "만24개월미만" }
             ];
             const sg = { id: `price_sub_${Date.now()}`, title: "", rows: defaultRows };
             if (!quoteGroupsData[groupId].priceInfo) quoteGroupsData[groupId].priceInfo = [];
@@ -3529,9 +3245,9 @@ function setupEventListeners() {
         } else if (button.classList.contains('load-inclusion-exclusion-db-btn')) {
             openLoadInclusionsModal();
         } else if (button.classList.contains('copy-inclusion-btn')) {
-            copyToClipboard(button.closest('div').nextElementSibling.value, '?ы븿 ?댁뿭');
+            copyToClipboard(button.closest('div').nextElementSibling.value, '포함 내역');
         } else if (button.classList.contains('copy-exclusion-btn')) {
-            copyToClipboard(button.closest('div').nextElementSibling.value, '遺덊룷???댁뿭');
+            copyToClipboard(button.closest('div').nextElementSibling.value, '불포함 내역');
         } else if (button.classList.contains('delete-dynamic-section-btn')) {
             const section = button.closest('.dynamic-section');
             if (section.classList.contains('flight-schedule-subgroup')) {
@@ -3567,7 +3283,7 @@ function setupEventListeners() {
                 if (subgroupData.rows.length > 1) {
                     subgroupData.rows.splice(rowIndex, 1);
                 } else {
-                     showToastMessage('理쒖냼 ??媛쒖쓽 ?붽툑 ??ぉ? ?좎??댁빞 ?⑸땲??', true);
+                     showToastMessage('최소 한 개의 요금 항목은 유지해야 합니다.', true);
                      return;
                 }
             }
@@ -3578,13 +3294,7 @@ function setupEventListeners() {
         } else if (button.classList.contains('day-toggle-button')) {
              ip_handleToggleDayCollapse(event, button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
         }
-        else if (
-            button.id.startsWith('ip-') ||
-            button.classList.contains('add-activity-button') ||
-            button.classList.contains('edit-activity-button') ||
-            button.classList.contains('duplicate-activity-button') ||
-            button.classList.contains('delete-activity-button')
-        ) {
+        else if(button.id.startsWith('ip-')) {
             if (button.id.includes('loadFromDBBtn')) ip_openLoadTripModal(groupId);
             else if (button.id.includes('copyInlineHtmlButton')) ip_handleCopyInlineHtml(groupId);
             else if (button.id.includes('inlinePreviewButton')) ip_handleInlinePreview(groupId);
@@ -3593,7 +3303,7 @@ function setupEventListeners() {
             else if (button.classList.contains('save-date-button')) ip_handleSaveDate(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId, button.previousElementSibling.value);
             else if (button.classList.contains('cancel-date-edit-button')) ip_handleCancelDateEdit(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
             else if (button.classList.contains('delete-day-button')) ip_showConfirmDeleteDayModal(button.closest('.ip-day-section').dataset.dayId.split('-')[1], groupId);
-            else if (button.classList.contains('add-activity-button')) ip_openAddActivityChoiceModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
+            else if (button.classList.contains('add-activity-button')) ip_openActivityModal(groupId, button.closest('.day-content-wrapper').querySelector('.activities-list').dataset.dayIndex);
             else if (button.classList.contains('edit-activity-button')) {
                 const card = button.closest('.ip-activity-card');
                 ip_openActivityModal(groupId, card.dataset.dayIndex, card.dataset.activityIndex);
@@ -3675,18 +3385,14 @@ function setupEventListeners() {
         if(event.target.matches('.sales-price')) {
             const expression = event.target.dataset.formula || event.target.value;
             const calculatedValue = evaluateMath(expression).toString();
-            copyToClipboard(calculatedValue, '?곹뭹媛');
+            copyToClipboard(calculatedValue, '상품가');
         } else if(event.target.matches('.copy-customer-info-btn')) {
              const inputElement = event.target.closest('div').querySelector('input');
-             copyToClipboard(inputElement.value, '怨좉컼?뺣낫');
+             copyToClipboard(inputElement.value, '고객정보');
         }
     });
     
     document.getElementById('ipActivityForm').addEventListener('submit', ip_handleActivityFormSubmit);
-    const ipAttractionSearchInput = document.getElementById('ipAttractionSearchInput');
-    if (ipAttractionSearchInput) {
-        ipAttractionSearchInput.addEventListener('input', ip_renderFilteredAttractionList);
-    }
     
     document.addEventListener('mousedown', (e) => {
         if (e.target.matches('.resizer-handle')) {
@@ -3699,7 +3405,7 @@ function setupEventListeners() {
             document.body.style.cursor = 'col-resize';
             document.body.style.userSelect = 'none';
             
-            // ?꾩옱 ?덈퉬媛믪씠 ?놁쑝硫?珥덇린??(??踰덉㎏ 由ъ궗?댁쫰瑜??꾪빐)
+            // 현재 너비값이 없으면 초기화 (두 번째 리사이즈를 위해)
             if (!pnrPane.style.width || pnrPane.style.width === 'auto') {
                 const currentPnrWidth = pnrPane.offsetWidth;
                 const currentQuoteWidth = quotePane.offsetWidth;
@@ -3716,7 +3422,7 @@ function setupEventListeners() {
                 let pnrWidth = moveEvent.clientX - rect.left;
 
                 const minPnrWidth = 150;
-                const minQuoteWidth = 280;  // 250 ??280: ?꾩옱 ?ㅽ겕由곗꺑 湲곗? 理쒖쟻 ?ш린
+                const minQuoteWidth = 280;  // 250 → 280: 현재 스크린샷 기준 최적 크기
                 const resizerWidth = resizer.offsetWidth;
 
                 // Clamp the pnrWidth to its min and max based on the container and quote pane min-width
@@ -3738,13 +3444,13 @@ function setupEventListeners() {
                 document.body.style.cursor = 'default';
                 document.body.style.userSelect = 'auto';
 
-                // flex ?띿꽦 蹂듭썝 (width???좎?)
-                pnrPane.style.flex = '0 0 auto';  // width 湲곕컲?쇰줈 怨좎젙 ?ш린 ?좎?
-                quotePane.style.flex = '0 0 auto'; // width 湲곕컲?쇰줈 怨좎젙 ?ш린 ?좎?
+                // flex 속성 복원 (width는 유지)
+                pnrPane.style.flex = '0 0 auto';  // width 기반으로 고정 크기 유지
+                quotePane.style.flex = '0 0 auto'; // width 기반으로 고정 크기 유지
                 
-                // width???쒓굅?섏? ?딄퀬 ?좎? (?ㅼ쓬 由ъ궗?댁쫰瑜??꾪빐 ?꾩슂)
-                // pnrPane.style.removeProperty('width');  // 二쇱꽍 泥섎━
-                // quotePane.style.removeProperty('width'); // 二쇱꽍 泥섎━
+                // width는 제거하지 않고 유지 (다음 리사이즈를 위해 필요)
+                // pnrPane.style.removeProperty('width');  // 주석 처리
+                // quotePane.style.removeProperty('width'); // 주석 처리
 
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
@@ -3772,7 +3478,7 @@ function setupEventListeners() {
         }
     });
     
-    // 珥덇린 濡쒕뱶 ???뚰겕?ㅽ럹?댁뒪 ?대깽??由ъ뒪??諛붿씤??
+    // 초기 로드 시 워크스페이스 이벤트 리스너 바인딩
     rebindWorkspaceEventListeners();
 }
 
@@ -3799,9 +3505,9 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const restoredData = JSON.parse(restoredDataJSON);
                 restoreState(restoredData);
-            } catch(e) { console.error("?몄뀡 ?곗씠???뚯떛 ?ㅽ뙣:", e); initializeNewSession(); }
+            } catch(e) { console.error("세션 데이터 파싱 실패:", e); initializeNewSession(); }
         } else { 
-            // ?뚯씪 ???쒖뒪??珥덇린??
+            // 파일 탭 시스템 초기화
             initializeNewSession();
         }
     } else {
@@ -3809,49 +3515,48 @@ document.addEventListener('DOMContentLoaded', () => {
         let restoredData = null;
         if (restoredDataScript && restoredDataScript.textContent.trim()) {
             try { restoredData = JSON.parse(restoredDataScript.textContent); }
-            catch (e) { console.error("????곗씠???뚯떛 ?ㅽ뙣:", e); restoredData = null; }
+            catch (e) { console.error("저장 데이터 파싱 실패:", e); restoredData = null; }
         }
         if (restoredData) { restoreState(restoredData); } 
         else { initializeNewSession(); }
     }
     setupEventListeners();
     
-    // 湲곗〈 ?붿냼?ㅼ뿉 ?댄똻 異붽?
+    // 기존 요소들에 툴팁 추가
     setTimeout(() => {
         addTooltipsToExistingElements();
     }, 100);
 });
 
-// 湲곗〈 ?붿냼?ㅼ뿉 ?댄똻 異붽??섎뒗 ?⑥닔
+// 기존 요소들에 툴팁 추가하는 함수
 function addTooltipsToExistingElements() {
-    // 鍮꾩슜 ???쇰꺼??
+    // 비용 행 라벨들
     document.querySelectorAll('.cost-row-label-span:not([title])').forEach(el => {
-        el.setAttribute('title', '?붾툝?대┃?섏뿬 ?섏젙 媛??);
+        el.setAttribute('title', '더블클릭하여 수정 가능');
     });
     
-    // ?몄썝 ????대쫫??
+    // 인원 타입 이름들
     document.querySelectorAll('.person-type-name-span:not([title])').forEach(el => {
-        el.setAttribute('title', '?붾툝?대┃?섏뿬 ?섏젙 媛??);
+        el.setAttribute('title', '더블클릭하여 수정 가능');
     });
     
-    // ?몄썝 ?섎뱾
+    // 인원 수들
     document.querySelectorAll('.person-count-span:not([title])').forEach(el => {
-        el.setAttribute('title', '?붾툝?대┃?섏뿬 ?섏젙 媛??);
+        el.setAttribute('title', '더블클릭하여 수정 가능');
     });
     
-    // ?숈쟻 ???쇰꺼??
+    // 동적 행 라벨들
     document.querySelectorAll('.dynamic-row-label-span:not([title])').forEach(el => {
-        el.setAttribute('title', '?붾툝?대┃?섏뿬 ?섏젙 媛??);
+        el.setAttribute('title', '더블클릭하여 수정 가능');
     });
     
-    // PNR ?쒕ぉ
+    // PNR 제목
     document.querySelectorAll('.pnr-title-span:not([title])').forEach(el => {
-        el.setAttribute('title', '?붾툝?대┃?섏뿬 ?섏젙 媛??);
+        el.setAttribute('title', '더블클릭하여 수정 가능');
     });
     
-    // 寃ъ쟻 洹몃９ ??뱾
+    // 견적 그룹 탭들
     document.querySelectorAll('.quote-tab span:not([title])').forEach(el => {
-        el.setAttribute('title', '?붾툝?대┃?섏뿬 ?섏젙 媛??);
+        el.setAttribute('title', '더블클릭하여 수정 가능');
     });
 }
-
