@@ -2163,6 +2163,17 @@ function syncGroupUIToData(groupId) {
         const calculatorData = groupData.calculators.find(c => c.id === calcId);
         if (!calculatorData) return;
 
+        const splitContainer = instance.querySelector('.split-container');
+        const pnrPane = splitContainer?.querySelector('.pnr-pane');
+        const quotePane = splitContainer?.querySelector('.quote-pane');
+        if (pnrPane && quotePane) {
+            const pnrWidth = parseFloat(pnrPane.style.width) || pnrPane.offsetWidth;
+            const quoteWidth = parseFloat(quotePane.style.width) || quotePane.offsetWidth;
+            if (pnrWidth > 0 && quoteWidth > 0) {
+                calculatorData.splitPane = { pnrWidth, quoteWidth };
+            }
+        }
+
         const pnrTextarea = instance.querySelector('.pnr-pane textarea');
         if (pnrTextarea) {
             calculatorData.pnr = pnrTextarea.value;
@@ -2899,7 +2910,7 @@ function initializeGroup(groupEl, groupId) {
     }
 }
 
-function buildCalculatorDOM(calcContainer) {
+function buildCalculatorDOM(calcContainer, calcData = null) {
     const content = document.createElement('div');
     content.innerHTML = `<div class="split-container"><div class="pnr-pane"><label class="label-text font-semibold mb-2"><span class="pnr-title-span" title="더블클릭하여 수정 가능">PNR 정보</span></label><textarea class="w-full flex-grow px-3 py-2 border rounded-md shadow-sm" placeholder="PNR 정보를 여기에 붙여넣으세요."></textarea></div><div class="resizer-handle"></div><div class="quote-pane"><div class="table-container"><table class="quote-table"><thead><tr class="header-row"><th><button type="button" class="btn btn-sm btn-primary add-person-type-btn"><i class="fas fa-plus"></i></button></th></tr><tr class="count-row"><th></th></tr></thead><tbody></tbody><tfoot></tfoot></table></div></div></div>`;
     const calculatorElement = content.firstElementChild;
@@ -2956,7 +2967,7 @@ function createCalculatorInstance(wrapper, groupId, calcData) {
     
     instanceContainer.appendChild(headerDiv);
     wrapper.appendChild(instanceContainer);
-    buildCalculatorDOM(instanceContainer);
+    buildCalculatorDOM(instanceContainer, calcData);
 
     if (calcData && calcData.tableHTML) {
         restoreCalculatorState(instanceContainer, calcData);
@@ -2964,7 +2975,35 @@ function createCalculatorInstance(wrapper, groupId, calcData) {
         addPersonTypeColumn(instanceContainer, '성인', 1);
     }
     
+    if (calcData && calcData.splitPane) {
+        setTimeout(() => applySavedSplitPaneWidths(instanceContainer, calcData.splitPane), 0);
+    }
+
     calculateAll(instanceContainer);
+}
+
+function applySavedSplitPaneWidths(instanceContainer, splitPane) {
+    if (!instanceContainer || !splitPane) return;
+    const splitContainer = instanceContainer.querySelector('.split-container');
+    const pnrPane = splitContainer?.querySelector('.pnr-pane');
+    const quotePane = splitContainer?.querySelector('.quote-pane');
+    const resizer = splitContainer?.querySelector('.resizer-handle');
+    if (!splitContainer || !pnrPane || !quotePane || !resizer) return;
+
+    const containerWidth = splitContainer.offsetWidth;
+    const resizerWidth = resizer.offsetWidth || 5;
+    const minPnrWidth = 150;
+    const minQuoteWidth = 280;
+    const savedQuoteWidth = Number(splitPane.quoteWidth);
+    if (!Number.isFinite(savedQuoteWidth)) return;
+
+    const maxQuoteWidth = containerWidth - minPnrWidth - resizerWidth;
+    const quoteWidth = Math.max(minQuoteWidth, Math.min(savedQuoteWidth, maxQuoteWidth));
+    const pnrWidth = containerWidth - quoteWidth - resizerWidth;
+    if (pnrWidth < minPnrWidth) return;
+
+    pnrPane.style.width = `${pnrWidth}px`;
+    quotePane.style.width = `${quoteWidth}px`;
 }
 
 function restoreCalculatorState(instanceContainer, calcData) {
