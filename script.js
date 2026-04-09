@@ -1080,6 +1080,7 @@ function initializeHotelMakerForGroup(container, groupId) {
                 <button id="hm-copyHtmlBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-copy"></i> 코드 복사</button>
                 <button id="hm-previewHotelBtn-${groupId}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i> 미리보기</button>
                 <button id="hm-loadHotelHtmlBtn-${groupId}" class="btn btn-sm btn-green"><i class="fas fa-database"></i> DB 불러오기</button>
+                <a href="https://kaknakiak.github.io/hotelinformation/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
             </div>
         </div>
         <div id="hm-hotelTabsContainer-${groupId}" class="hm-tabs-container flex flex-wrap items-center border-b-2 border-gray-200 mb-4">
@@ -1431,6 +1432,7 @@ function initializeItineraryPlannerForGroup(container, groupId) {
                     <button id="ip-copyInlineHtmlButton-${groupId}" class="btn btn-sm btn-outline" title="일정표 코드 복사"><i class="fas fa-copy"></i> 코드 복사</button>
                     <button id="ip-inlinePreviewButton-${groupId}" class="btn btn-sm btn-outline" title="인라인 형식 미리보기"><i class="fas fa-eye"></i> 미리보기</button>
                     <button id="ip-loadFromDBBtn-${groupId}" class="btn btn-sm btn-green" title="DB에서 일정 불러오기"><i class="fas fa-database"></i><span class="inline ml-2">DB 불러오기</span></button>
+                    <a href="https://kaknakiak.github.io/tripplantest2/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">원본 사이트</a>
                 </div>
             </div>
         </header>
@@ -1467,7 +1469,7 @@ function ip_renderHeaderTitle(groupId, container) {
         headerTitleSection.append(input, saveButton, cancelButton);
         requestAnimationFrame(() => { input.focus(); input.select(); });
     } else {
-        const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title || ' ';
+        const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title || '일정표';
         titleH1.style.cursor = 'pointer';
         titleH1.title = '클릭하여 제목 수정';
         titleH1.addEventListener('click', () => ip_handleEditTripTitle(groupId));
