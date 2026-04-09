@@ -924,7 +924,7 @@ function initializeWorkspaceForSession(session) {
                         <button type="button" id="copyMemoBtn" class="mt-2 btn btn-sm btn-outline"><i class="far fa-copy"></i> 메모 복사</button>
                     </section>
                     <section class="w-full sm:w-1/2 p-4 sm:p-6 border border-gray-200 rounded-lg">
-                        <h2 class="text-base font-semibold text-gray-800 mb-4">업무 보조 툴</h2>
+                        <h2 class="text-base font-semibold text-gray-800 mb-4">url 단축기</h2>
                         <div class="mt-4">
                             <div class="rounded-md border border-gray-200 overflow-hidden bg-white" style="height: 220px;">
                                 <iframe
