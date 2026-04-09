@@ -492,7 +492,9 @@ function rebindWorkspaceEventListeners() {
                     const groupData = quoteGroupsData[groupId];
                     const newCalcData = { id: `calc_${Date.now()}`, pnr: '', tableHTML: null, pnrTitle: 'PNR 정보' };
                     groupData.calculators.push(newCalcData);
-                    renderCalculators(groupId);
+                    const calculatorsWrapper = document.getElementById(`calculators-wrapper-${groupId}`);
+                    if (calculatorsWrapper) createCalculatorInstance(calculatorsWrapper, groupId, newCalcData);
+                    else renderCalculators(groupId);
                 } else if (button.classList.contains('copy-last-calculator-btn')) {
                      const groupData = quoteGroupsData[groupId];
                     if (!groupData || groupData.calculators.length === 0) { showToastMessage('복사할 견적 계산이 없습니다.', true); return; }
@@ -3548,7 +3550,9 @@ function setupEventListeners() {
             const groupData = quoteGroupsData[groupId];
             const newCalcData = { id: `calc_${Date.now()}`, pnr: '', tableHTML: null, pnrTitle: 'PNR 정보' };
             groupData.calculators.push(newCalcData);
-            renderCalculators(groupId);
+            const calculatorsWrapper = document.getElementById(`calculators-wrapper-${groupId}`);
+            if (calculatorsWrapper) createCalculatorInstance(calculatorsWrapper, groupId, newCalcData);
+            else renderCalculators(groupId);
         } else if (button.classList.contains('copy-last-calculator-btn')) {
              const groupData = quoteGroupsData[groupId];
             if (!groupData || groupData.calculators.length === 0) { showToastMessage('복사할 견적 계산이 없습니다.', true); return; }
