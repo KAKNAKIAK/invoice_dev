@@ -547,7 +547,7 @@ function rebindWorkspaceEventListeners() {
                          hm_switchTab(groupId, parseInt(button.dataset.index));
                     }
                 } else if (button.classList.contains('parse-gds-btn')) {
-                    window.open('./gds_parser/gds_parser.html', 'GDS_Parser', `width=800,height=500,top=${(screen.height / 2) - 250},left=${(screen.width / 2) - 400}`);
+                    openGdsParserWindow();
                 } else if (button.classList.contains('copy-flight-schedule-btn')) {
                     copyHtmlToClipboard(generateFlightScheduleInlineHtml(quoteGroupsData[groupId].flightSchedule));
                 } else if (button.classList.contains('copy-price-info-btn')) {
@@ -1896,6 +1896,27 @@ function showToastMessage(message, isError = false) {
         toast.classList.add('opacity-0', 'translate-y-4');
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }, 3000);
+}
+
+function getAppBasePath() {
+    const pathname = window.location.pathname || '/';
+    const legacyMarker = '/public/legacy/quote/';
+    const legacyIndex = pathname.indexOf(legacyMarker);
+    if (legacyIndex >= 0) {
+        const prefix = pathname.slice(0, legacyIndex);
+        return prefix ? `${prefix}/` : '/';
+    }
+
+    if (window.location.hostname.endsWith('github.io')) {
+        const first = pathname.split('/').filter(Boolean)[0] || '';
+        if (first && !first.includes('.')) return `/${first}/`;
+    }
+    return '/';
+}
+
+function openGdsParserWindow() {
+    const gdsUrl = `${window.location.origin}${getAppBasePath()}gds_parser/gds_parser.html`;
+    window.open(gdsUrl, 'GDS_Parser', `width=800,height=500,top=${(screen.height / 2) - 250},left=${(screen.width / 2) - 400}`);
 }
 
 function syncGroupUIToData(groupId) {
@@ -3334,7 +3355,7 @@ function setupEventListeners() {
                  hm_switchTab(groupId, parseInt(button.dataset.index));
             }
         } else if (button.classList.contains('parse-gds-btn')) {
-            window.open('./gds_parser/gds_parser.html', 'GDS_Parser', `width=800,height=500,top=${(screen.height / 2) - 250},left=${(screen.width / 2) - 400}`);
+            openGdsParserWindow();
         } else if (button.classList.contains('copy-flight-schedule-btn')) {
             copyHtmlToClipboard(generateFlightScheduleInlineHtml(quoteGroupsData[groupId].flightSchedule));
         } else if (button.classList.contains('copy-price-info-btn')) {
