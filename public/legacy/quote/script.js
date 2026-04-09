@@ -1484,7 +1484,8 @@ function ip_renderHeaderTitle(groupId, container) {
         const input = document.createElement('input'); input.type = 'text'; input.className = 'ip-header-title-input'; input.value = itineraryData.title;
         const saveButton = document.createElement('button'); saveButton.className = 'icon-button'; saveButton.title = '제목 저장'; saveButton.innerHTML = ip_saveIconSVG; saveButton.addEventListener('click', () => ip_handleSaveTripTitle(groupId));
         const cancelButton = document.createElement('button'); cancelButton.className = 'icon-button'; cancelButton.title = '취소'; cancelButton.innerHTML = ip_cancelIconSVG; cancelButton.addEventListener('click', () => ip_handleCancelTripTitleEdit(groupId));
-        headerTitleSection.append(input, saveButton, cancelButton); input.focus();
+        headerTitleSection.append(input, saveButton, cancelButton);
+        requestAnimationFrame(() => { input.focus(); input.select(); });
     } else {
         const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title;
         titleH1.style.cursor = 'pointer';
@@ -1676,7 +1677,15 @@ function ip_handleDuplicateActivity(groupId, dayIndex, activityIndex) {
 function ip_handleEditTripTitle(groupId) { quoteGroupsData[groupId].itineraryData.editingTitle = true; ip_render(groupId); }
 function ip_handleSaveTripTitle(groupId) { const container = document.getElementById(`itinerary-planner-container-${groupId}`); const input = container.querySelector(`#ip-headerTitleSection-${groupId} input`); quoteGroupsData[groupId].itineraryData.title = input.value; quoteGroupsData[groupId].itineraryData.editingTitle = false; ip_render(groupId); }
 function ip_handleCancelTripTitleEdit(groupId) { quoteGroupsData[groupId].itineraryData.editingTitle = false; ip_render(groupId); }
-function ip_handleEditDate(dayIndex, groupId) { quoteGroupsData[groupId].itineraryData.days.forEach((day, index) => { day.editingDate = (index === dayIndex); }); ip_render(groupId); }
+function ip_handleEditDate(dayIndex, groupId) {
+    quoteGroupsData[groupId].itineraryData.days.forEach((day, index) => { day.editingDate = (index === dayIndex); });
+    ip_render(groupId);
+    setTimeout(() => {
+        const container = document.getElementById(`itinerary-planner-container-${groupId}`);
+        const targetInput = container?.querySelector(`.ip-day-section[data-day-id="day-${dayIndex}"] .date-edit-input-text`);
+        if (targetInput) { targetInput.focus(); targetInput.select(); }
+    }, 0);
+}
 function ip_handleSaveDate(dayIndex, groupId, dateValue) {
     const validatedDate = ip_parseAndValidateDateInput(dateValue);
     if (validatedDate) {
