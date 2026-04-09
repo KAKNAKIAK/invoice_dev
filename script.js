@@ -1481,7 +1481,7 @@ function ip_renderHeaderTitle(groupId, container) {
         headerTitleSection.append(input, saveButton, cancelButton);
         requestAnimationFrame(() => { input.focus(); input.select(); });
     } else {
-        const titleH1 = document.createElement('h1'); titleH1.className = 'text-2xl font-bold'; titleH1.textContent = itineraryData.title || '일정표';
+        const titleH1 = document.createElement('h2'); titleH1.className = 'text-base font-semibold'; titleH1.textContent = itineraryData.title || '일정표';
         titleH1.style.cursor = 'pointer';
         titleH1.title = '클릭하여 제목 수정';
         titleH1.addEventListener('click', () => ip_handleEditTripTitle(groupId));
